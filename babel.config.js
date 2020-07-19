@@ -3,7 +3,7 @@ module.exports = function (api) {
   return {
     presets: ['module:metro-react-native-babel-preset'],
     plugins: [
-      ['babel-plugin-root-import', {rootPathSuffix: 'src'}],
+      ['babel-plugin-root-import', { rootPathSuffix: 'src' }],
       [
         '@babel/plugin-proposal-decorators',
         {

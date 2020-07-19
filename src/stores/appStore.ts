@@ -1,4 +1,4 @@
-import {observable, action, computed} from 'mobx';
+import { observable, action, computed } from 'mobx';
 
 class AppStore {
   @observable private _loading = true;

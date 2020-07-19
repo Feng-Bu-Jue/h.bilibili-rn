@@ -1,0 +1,63 @@
+export type DrawCategory = 'all' | 'illustration' | 'comic' | 'other';
+export type ListType = 'hot' | 'new';
+
+export interface BiliBiliProtocol<T> {
+  public code: number;
+  public message: string;
+  public msg: string;
+  public data: T;
+}
+
+export interface Picture {
+  public img_height: number;
+  public img_size: number;
+  public img_width: number;
+  public img_src: string;
+}
+
+export interface LinkDrawItem {
+  public already_liked: number;
+  public already_voted: number;
+  public category: string;
+  public doc_id: number;
+  public poster_uid: number;
+  public title: string;
+  public description: string;
+  public upload_time: number;
+  public upload_timestamp: number;
+  public view_count: number;
+  public pictures: Array<Picture>;
+}
+
+export interface LinkDrawUesr {
+  public head_url: string;
+  public name: string;
+  public uid: number;
+}
+
+export interface LinkDrawResult {
+  public item: LinkDrawItem;
+  public user: LinkDrawUesr;
+}
+
+export interface LinkDrawResultList {
+  public total_count: number;
+  public items: LinkDrawResult[];
+}
+
+//* v1 */
+export interface LinkDrawResultV1 {
+  public count: number;
+  public ctime: number;
+  public description: number;
+  public doc_id: number;
+  public like: number;
+  public pictures: number;
+  public poster_uid: number;
+  public title: number;
+  public view: number;
+}
+
+export interface LinkDrawResultV1List {
+  public items: Array<LinkDrawResultV1>;
+}

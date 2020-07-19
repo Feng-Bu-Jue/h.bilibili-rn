@@ -6319,10 +6319,9 @@ tr46@^1.0.1:
   dependencies:
     punycode "^2.1.0"
 
-ts-retrofit@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.npm.taobao.org/ts-retrofit/download/ts-retrofit-1.5.0.tgz#796ea3f057d1d25a246ae6700efa21ba3a9072a8"
-  integrity sha1-eW6j8FfR0lokauZwDvohujqQcqg=
+"ts-retrofit@git+https://github.com/Feng-Bu-Jue/ts-retrofit.git":
+  version "1.5.1"
+  resolved "git+https://github.com/Feng-Bu-Jue/ts-retrofit.git#d8709f42eb9735b0dc4596a886b03289bfe38ce9"
   dependencies:
     axios "^0.19.0"
     form-data "^2.5.1"

@@ -1,9 +1,9 @@
 import React from 'react';
-import {enableScreens} from 'react-native-screens';
-import {Router} from '~/navigators';
-import {Splash} from '~/components/splash';
-import {observer} from 'mobx-react';
-import {appStore} from '~/stores/appStore';
+import { enableScreens } from 'react-native-screens';
+import { Router } from '~/navigators';
+import { Splash } from '~/components/splash';
+import { observer } from 'mobx-react';
+import { appStore } from '~/stores/appStore';
 enableScreens();
 
 const sleep = (ms: number) => {
