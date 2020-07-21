@@ -1,10 +1,10 @@
-import { ServiceBuilder, BaseService } from 'ts-retrofit';
+import { ServiceBuilder, BaseService, QueryMap } from 'ts-retrofit';
 
 const ApiEndponits = {
-  apivc: 'https://api.vc.bilibili.com',
-  api: 'https://api.bilibili.com',
-  kaaassNet: 'https://api.kaaass.net',
-  apiLive: 'https://api.live.bilibili.com',
+  apivc: 'https://api.vc.bilibili.com/',
+  api: 'https://api.bilibili.com/',
+  kaaassNet: 'https://api.kaaass.net/',
+  apiLive: 'https://api.live.bilibili.com/',
 };
 
 export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
@@ -16,22 +16,22 @@ export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
   };
 };
 
+export const QueryMapW = () => {
+  return QueryMap;
+};
+
 export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
-  /*
   const endpoint = (ApiEndponits as any)[
     service.prototype.__meta__.ApiDescriptor
   ];
-  */
-  return (
-    new ServiceBuilder()
-      //.setEndpoint(endpoint)
-      .setStandalone(true)
-      .setResponseInterceptors((response) => {
-        //handling 401
-        return response;
-      })
-      .build(service)
-  );
+  return new ServiceBuilder()
+    .setEndpoint(endpoint)
+    .setStandalone(true)
+    .setResponseInterceptors((response) => {
+      //handling 401
+      return response;
+    })
+    .build(service);
 };
 
 /*

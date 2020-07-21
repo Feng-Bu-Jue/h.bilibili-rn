@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BaseService, GET, QueryMap, Response, BasePath } from 'ts-retrofit';
-import { ApiDescriptor, buildApi } from '..';
+import { BaseService, GET, Response } from 'ts-retrofit';
+import { ApiDescriptor, buildApi, QueryMapW } from '..';
 import {
   BiliBiliProtocol,
   LinkDrawResultList,
@@ -9,12 +9,16 @@ import {
 } from '../typings';
 
 @ApiDescriptor('apivc')
-@BasePath('https://api.vc.bilibili.com')
 export class LinkDraw extends BaseService {
   @GET('link_draw/v2/doc/list')
   async getDocs(
-    @QueryMap
-    query: any,
+    @QueryMapW()
+    query: {
+      page_num: number;
+      page_size: number;
+      category: DrawCategory;
+      type: ListType;
+    },
   ): Promise<Response<BiliBiliProtocol<LinkDrawResultList>>> {
     return <Response<BiliBiliProtocol<LinkDrawResultList>>>{};
   }
