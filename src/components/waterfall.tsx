@@ -12,6 +12,7 @@ type Props<TItem> = {
   itemInfoData: ItemInfo<TItem>[];
   bufferAmount?: number;
   renderItem: (itemInfo: ItemInfo<TItem>, index: number) => React.ReactNode;
+  onReachEnd: () => void;
 };
 
 type State = {
@@ -48,9 +49,15 @@ export default class Waterfall<TItem = any> extends React.Component<
   onScroll = ({
     nativeEvent: {
       contentOffset: { y },
+      layoutMeasurement: { height },
+      contentSize: { height: contentHeight },
     },
   }: NativeSyntheticEvent<NativeScrollEvent>) => {
     this.setState({ offset: y });
+    console.log(y, contentHeight);
+    if (y + height >= contentHeight - 20) {
+      this.props.onReachEnd?.call(undefined);
+    }
   };
 
   _getOffsetColumn(predicate: (a: number, b: number) => boolean) {
@@ -78,7 +85,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     return this._getOffsetColumn((a, b) => a >= b);
   }
 
-  evaluateVisableRange() {
+  evaluateVisibleRange() {
     let { offset } = this.state;
     const { itemInfoData, bufferAmount } = this.props;
     const maxOffset = offset + this.scrollHeight * 2;
@@ -193,7 +200,7 @@ export default class Waterfall<TItem = any> extends React.Component<
       if (!this.itemOffsetTops.length) {
         this.itemOffsetTops = Array(columnCount).fill(0);
       }
-      const [start, end] = this.evaluateVisableRange();
+      const [start, end] = this.evaluateVisibleRange();
       for (let i = start; i <= end; i++) {
         const posistion = this.getPositionForIndex(i);
         items.push(

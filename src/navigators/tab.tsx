@@ -30,7 +30,7 @@ const FirstRoute = () => {
   const [items, setItems] = useState([]);
   useEffect(() => {
     LinkDrawApi.getDocs({
-      page_num: 4,
+      page_num: 6,
       page_size: 20,
       type: 'hot',
       category: 'illustration',
@@ -95,6 +95,31 @@ const FirstRoute = () => {
               />
             </View>
           );
+        }}
+        onReachEnd={() => {
+          LinkDrawApi.getDocs({
+            page_num: 7,
+            page_size: 20,
+            type: 'hot',
+            category: 'illustration',
+          }).then((respnose) => {
+              console.log(respnose.data.data.items[0].item);
+              setItems([
+                ...items,
+                ...respnose.data.data.items.map((item) => {
+                  const ratio =
+                    item.item.pictures[0].img_height /
+                    item.item.pictures[0].img_width;
+                  return {
+                    size: ratio * 180,
+                    item: item,
+                  };
+                }),
+              ]);
+            })
+            .catch((error) => {
+              console.log(JSON.stringify(error));
+            });
         }}
       />
     </View>
