@@ -1,4 +1,5 @@
 export type DrawCategory = 'all' | 'illustration' | 'comic' | 'other';
+export type PhotoCategory = 'all' | 'sifu' | 'cos';
 export type ListType = 'hot' | 'new';
 
 export interface BiliBiliProtocol<T> {
