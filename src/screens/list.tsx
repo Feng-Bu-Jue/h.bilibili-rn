@@ -10,10 +10,10 @@ import { Waterfall, BaseComponent } from '~/components';
 import { ItemInfo } from '~/components/waterfall';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction } from 'mobx';
-import { View, StyleSheet } from 'react-native';
-import { layout } from '~/utils/layout';
+import { View, StyleSheet, Text } from 'react-native';
 import { Response } from 'ts-retrofit';
-import { colors } from '~/utils/colors';
+import { layout } from '~/constants/layout';
+import { colors } from '~/constants/colors';
 
 @observer
 export default class DrawList extends BaseComponent<{
@@ -93,7 +93,11 @@ export default class DrawList extends BaseComponent<{
             columnWidth: number,
           ) => {
             return (
-              <>
+              <View
+                style={[
+                  layout.margin(10, 0),
+                  { backgroundColor: colors.white, borderRadius: 10 },
+                ]}>
                 <FastImage
                   // eslint-disable-next-line react-native/no-inline-styles
                   style={{
@@ -108,9 +112,38 @@ export default class DrawList extends BaseComponent<{
                   }}
                   resizeMode={FastImage.resizeMode.contain}
                 />
-                <View
-                  style={{ height: 100, backgroundColor: colors.white }}></View>
-              </>
+                <View style={{ height: 90, ...layout.padding(8) }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{ fontSize: 14, color: colors.black }}>
+                    {item.item.title}{' '}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: 5,
+                    }}>
+                    <FastImage
+                      // eslint-disable-next-line react-native/no-inline-styles
+                      style={{
+                        height: 24,
+                        width: 24,
+                        marginRight: 10,
+                        borderRadius: 24,
+                      }}
+                      source={{
+                        uri: `${item.user.head_url}@${24}w_${24}h_1e.webp`,
+                        priority: FastImage.priority.high,
+                      }}
+                      resizeMode={FastImage.resizeMode.contain}
+                    />
+                    <Text style={{ fontSize: 14, color: colors.charcoal }}>
+                      {item.user.name}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             );
           }}
           onReachEnd={(w) => this.fetchDrawItems(w)}

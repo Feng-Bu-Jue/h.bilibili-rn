@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import { appStore } from '~/stores/appStore';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar, Platform } from 'react-native';
-import { colors } from '~/utils/colors';
+import { colors } from '~/constants/colors';
 
 enableScreens();
 

@@ -13,8 +13,8 @@ import { TabView, SceneMap } from 'react-native-tab-view';
 import DrawList from '~/screens/list';
 import TabBarItem from '~/components/tabView/tabBarItem';
 import TabBar from '~/components/tabView/tabBar';
-import { colors } from '~/utils/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '~/constants/colors';
 
 const Tab = createBottomTabNavigator();
 
@@ -58,7 +58,6 @@ export function DrawListTabView() {
                 backgroundColor: colors.white,
                 paddingTop: insets.top,
                 paddingBottom: 10,
-                marginBottom: 10,
                 elevation: 4,
                 shadowColor: colors.black,
                 shadowOpacity: 0.1,

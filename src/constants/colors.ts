@@ -6,6 +6,7 @@ export const colors = {
   apricot: '#f18867',
   black: '#111111',
   white: '#FFFFFF',
+  charcoal: 'rgb(70,70,70)',
   gray: '#DADADA',
   shadow: '#999999',
   transparent: 'rgba(255, 255, 255, 0)',
