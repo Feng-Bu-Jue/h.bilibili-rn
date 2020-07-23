@@ -4,6 +4,10 @@ import { Router } from '~/navigators';
 import { Splash } from '~/components/splash';
 import { observer } from 'mobx-react';
 import { appStore } from '~/stores/appStore';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar, Platform } from 'react-native';
+import { colors } from '~/utils/colors';
+
 enableScreens();
 
 const sleep = (ms: number) => {
@@ -29,7 +33,18 @@ class App extends React.Component<AppProps> {
   }
 
   render() {
-    return appStore.loading ? <Splash /> : <Router />;
+    return (
+      <SafeAreaProvider>
+        {Platform.OS === 'android' && (
+          <StatusBar
+            barStyle={Platform.Version >= 23 ? 'dark-content' : 'light-content'}
+            translucent
+            backgroundColor={colors.transparent}
+          />
+        )}
+        {appStore.loading ? <Splash /> : <Router />}
+      </SafeAreaProvider>
+    );
   }
 }
 

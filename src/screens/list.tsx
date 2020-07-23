@@ -22,7 +22,6 @@ export default class DrawList extends BaseComponent<{
   pageNum = 1;
   columnCount = 2;
   columnGap = 10;
-  waterfallRef: Waterfall | null = null;
 
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
@@ -31,7 +30,7 @@ export default class DrawList extends BaseComponent<{
     super(props);
   }
 
-  async fetchDrawItems() {
+  async fetchDrawItems(columnWidth: number) {
     try {
       let response: Response<BiliBiliProtocol<LinkDrawResultList>>;
       if (this.props.pageType === 'draw') {
@@ -58,7 +57,7 @@ export default class DrawList extends BaseComponent<{
                 item.item.pictures[0].img_height /
                 item.item.pictures[0].img_width;
               return {
-                size: ratio * this.waterfallRef!.getColumnWidth() + 100,
+                size: ratio * columnWidth + 100,
                 item: item,
               };
             }),
@@ -76,16 +75,13 @@ export default class DrawList extends BaseComponent<{
     return (
       <View style={[layout.flex(1)]}>
         <Waterfall
-          ref={(r) => {
-            if (!this.waterfallRef) {
-              this.waterfallRef = r;
-              this.fetchDrawItems();
-            }
-          }}
+          initData={(w) => this.fetchDrawItems(w)}
           columnCount={2}
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
           bufferAmount={10}
+          containerStyle={layout.padding(0, 10)}
+          bounces={true}
           renderItem={(
             {
               item,
@@ -97,26 +93,27 @@ export default class DrawList extends BaseComponent<{
             columnWidth: number,
           ) => {
             return (
-              <FastImage
-                style={{
-                  height: size - 100,
-                  width: columnWidth,
-                  overflow: 'hidden',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                }}
-                source={{
-                  uri: item.item.pictures[0].img_src + '@512w_384h_1e.webp',
-                  priority: FastImage.priority.high,
-                }}
-                resizeMode={FastImage.resizeMode.stretch}
-              />
+              <>
+                <FastImage
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  style={{
+                    height: size - 100,
+                    width: columnWidth,
+                    borderTopLeftRadius: 10,
+                    borderTopRightRadius: 10,
+                  }}
+                  source={{
+                    uri: item.item.pictures[0].img_src + '@512w_384h_1e.webp',
+                    priority: FastImage.priority.high,
+                  }}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
+                <View
+                  style={{ height: 100, backgroundColor: colors.white }}></View>
+              </>
             );
           }}
-          onReachEnd={() => {
-            this.fetchDrawItems();
-          }}
+          onReachEnd={(w) => this.fetchDrawItems(w)}
         />
       </View>
     );

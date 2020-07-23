@@ -4,8 +4,11 @@ import {
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  StyleProp,
+  ImageStyle,
+  ScrollViewProps,
+  Animated,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 export type WaterfallProps<TItem> = {
   columnCount: number;
@@ -17,8 +20,12 @@ export type WaterfallProps<TItem> = {
     columnWidth: number,
     index: number,
   ) => React.ReactNode;
-  onReachEnd: () => void;
-};
+  initData: (columnWidth: number) => {};
+  onReachEnd?: (columnWidth: number) => void;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  style?: StyleProp<ImageStyle>;
+  containerStyle?: StyleProp<ImageStyle>;
+} & ScrollViewProps;
 
 type State = {
   columnWidth: number;
@@ -56,7 +63,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     return this.state.columnWidth;
   };
 
-  onScroll = ({
+  _onScroll = ({
     nativeEvent: {
       contentOffset: { y },
       layoutMeasurement: { height },
@@ -65,7 +72,7 @@ export default class Waterfall<TItem = any> extends React.Component<
   }: NativeSyntheticEvent<NativeScrollEvent>) => {
     this.setState({ offset: y });
     if (y + height >= contentHeight - 20) {
-      this.props.onReachEnd?.call(undefined);
+      this.props.onReachEnd?.call(undefined, this.state.columnWidth);
     }
   };
 
@@ -149,7 +156,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     compare: (mid: number) => boolean;
   }) {
     while (maxIndex >= minIndex) {
-      var middle = minIndex + Math.floor((maxIndex - minIndex) / 2);
+      const middle = minIndex + Math.floor((maxIndex - minIndex) / 2);
       if (compare(middle)) {
         minIndex = middle + 1;
       } else {
@@ -202,7 +209,16 @@ export default class Waterfall<TItem = any> extends React.Component<
   }
 
   render() {
-    const { columnCount, columnGap, itemInfoData, renderItem } = this.props;
+    const {
+      columnCount,
+      columnGap,
+      itemInfoData,
+      renderItem,
+      containerStyle,
+      initData,
+      onScroll,
+      ...rest
+    } = this.props;
     const { columnWidth } = this.state;
     const items: React.ReactNodeArray = [];
     let scrollOffset = 0;
@@ -212,9 +228,6 @@ export default class Waterfall<TItem = any> extends React.Component<
         const posistion = this.getPositionForIndex(i);
         items.push(
           <View
-            onLayout={(e) => {
-              console.log(i, e.nativeEvent.layout.width, columnWidth);
-            }}
             key={i}
             // eslint-disable-next-line react-native/no-inline-styles
             style={{
@@ -234,29 +247,47 @@ export default class Waterfall<TItem = any> extends React.Component<
     return (
       <View
         // eslint-disable-next-line react-native/no-inline-styles
-        style={{ flex: 1 }}
-        onLayout={({
-          nativeEvent: {
-            layout: { width, height },
-          },
-        }) => {
-          if (this.scrollWidth !== width) {
-            this.scrollWidth = width;
-            this.scrollHeight = height;
-            this.setState({
-              columnWidth: (width + columnGap!) / columnCount,
-            });
-          }
-        }}>
-        <ScrollView onScroll={this.onScroll} scrollEventThrottle={100}>
+        style={{ flex: 1 }}>
+        <ScrollView
+          style={{ height: scrollOffset }}
+          bounces={false}
+          onScroll={(e) => {
+            this._onScroll(e);
+            onScroll?.call(undefined, e);
+          }}
+          scrollEventThrottle={100}
+          {...rest}>
           <Animated.View
-            // eslint-disable-next-line react-native/no-inline-styles
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: scrollOffset,
-            }}>
-            {items}
+            style={[
+              // eslint-disable-next-line react-native/no-inline-styles
+              {
+                position: 'relative',
+                width: '100%',
+              },
+              containerStyle,
+            ]}>
+            <View
+              style={{ height: scrollOffset }}
+              onLayout={({
+                nativeEvent: {
+                  layout: { width, height },
+                },
+              }) => {
+                if (this.scrollWidth !== width) {
+                  this.scrollWidth = width;
+                  this.scrollHeight = height;
+                  const newColumnWidth =
+                    (width - (columnCount - 1) * columnGap!) / columnCount;
+                  if (!itemInfoData?.length) {
+                    initData?.call(undefined, newColumnWidth);
+                  }
+                  this.setState({
+                    columnWidth: newColumnWidth,
+                  });
+                }
+              }}>
+              {items}
+            </View>
           </Animated.View>
         </ScrollView>
       </View>

@@ -8,5 +8,5 @@ export const colors = {
   white: '#FFFFFF',
   gray: '#DADADA',
   shadow: '#999999',
-  white: '#ffffff',
+  transparent: 'rgba(255, 255, 255, 0)',
 };
