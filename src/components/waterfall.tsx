@@ -1,13 +1,14 @@
 import React from 'react';
 import {
   View,
-  ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
   StyleProp,
   ImageStyle,
   ScrollViewProps,
   Animated,
+  LayoutChangeEvent,
+  StyleSheet,
 } from 'react-native';
 
 export type WaterfallProps<TItem> = {
@@ -20,8 +21,11 @@ export type WaterfallProps<TItem> = {
     columnWidth: number,
     index: number,
   ) => React.ReactNode;
-  initData: (columnWidth: number) => {};
-  onReachEnd?: (columnWidth: number) => void;
+  renderHeader: () => React.ReactNode;
+  renderFooter: () => React.ReactNode;
+  onInitData: (columnWidth: number) => void;
+  onInfinite?: (columnWidth: number) => void;
+  onRefesh: (columnWidth: number) => void;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   style?: StyleProp<ImageStyle>;
   containerStyle?: StyleProp<ImageStyle>;
@@ -46,6 +50,9 @@ export default class Waterfall<TItem = any> extends React.Component<
     bufferAmount: 10,
   };
 
+  scrollOffset = new Animated.Value(0);
+  itemsRunwayOffset = new Animated.Value(0);
+
   scrollHeight = 0;
   scrollWidth = 0;
   lastMeasuredIndex = -1;
@@ -63,7 +70,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     return this.state.columnWidth;
   };
 
-  _onScroll = ({
+  private onScroll = ({
     nativeEvent: {
       contentOffset: { y },
       layoutMeasurement: { height },
@@ -72,11 +79,32 @@ export default class Waterfall<TItem = any> extends React.Component<
   }: NativeSyntheticEvent<NativeScrollEvent>) => {
     this.setState({ offset: y });
     if (y + height >= contentHeight - 20) {
-      this.props.onReachEnd?.call(undefined, this.state.columnWidth);
+      this.props.onInfinite?.call(undefined, this.state.columnWidth);
     }
   };
 
-  _getOffsetColumn(predicate: (a: number, b: number) => boolean) {
+  private onItemsBoxLayout = ({
+    nativeEvent: {
+      layout: { width, height },
+    },
+  }: LayoutChangeEvent) => {
+    if (this.scrollWidth !== width) {
+      const { columnCount, columnGap, itemInfoData, onInitData } = this.props;
+
+      this.scrollWidth = width;
+      this.scrollHeight = height;
+      const newColumnWidth =
+        (width - (columnCount - 1) * columnGap!) / columnCount;
+      if (!itemInfoData?.length) {
+        onInitData?.call(undefined, newColumnWidth);
+      }
+      this.setState({
+        columnWidth: newColumnWidth,
+      });
+    }
+  };
+
+  private getOffsetColumn(predicate: (a: number, b: number) => boolean) {
     let index = 0;
     let value = 0;
     if (this.itemOffsetTops.length) {
@@ -94,11 +122,11 @@ export default class Waterfall<TItem = any> extends React.Component<
   }
 
   getLowestOffsetColumn() {
-    return this._getOffsetColumn((a, b) => a <= b);
+    return this.getOffsetColumn((a, b) => a <= b);
   }
 
   getHighestOffsetColumn() {
-    return this._getOffsetColumn((a, b) => a >= b);
+    return this.getOffsetColumn((a, b) => a >= b);
   }
 
   evaluateVisibleRange() {
@@ -210,20 +238,21 @@ export default class Waterfall<TItem = any> extends React.Component<
 
   render() {
     const {
-      columnCount,
-      columnGap,
-      itemInfoData,
       renderItem,
-      containerStyle,
-      initData,
+      renderHeader,
+      renderFooter,
+      itemInfoData,
+      style,
       onScroll,
+      containerStyle,
       ...rest
     } = this.props;
     const { columnWidth } = this.state;
     const items: React.ReactNodeArray = [];
-    let scrollOffset = 0;
+
     if (columnWidth && itemInfoData.length) {
       const [start, end] = this.evaluateVisibleRange();
+
       for (let i = start; i <= end; i++) {
         const posistion = this.getPositionForIndex(i);
         items.push(
@@ -241,56 +270,39 @@ export default class Waterfall<TItem = any> extends React.Component<
           </View>,
         );
       }
-      scrollOffset = this.getHighestOffsetColumn()[1];
+
+      const runwayOffset = this.getHighestOffsetColumn()[1];
+      this.itemsRunwayOffset.setValue(runwayOffset);
     }
 
     return (
       <View
         // eslint-disable-next-line react-native/no-inline-styles
         style={{ flex: 1 }}>
-        <ScrollView
-          style={{ height: scrollOffset }}
+        <Animated.ScrollView
+          style={style}
           bounces={false}
-          onScroll={(e) => {
-            this._onScroll(e);
+          onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+            this.onScroll(e);
             onScroll?.call(undefined, e);
           }}
           scrollEventThrottle={100}
-          {...rest}>
-          <Animated.View
-            style={[
-              // eslint-disable-next-line react-native/no-inline-styles
-              {
-                position: 'relative',
-                width: '100%',
-              },
-              containerStyle,
-            ]}>
-            <View
-              style={{ height: scrollOffset }}
-              onLayout={({
-                nativeEvent: {
-                  layout: { width, height },
-                },
-              }) => {
-                if (this.scrollWidth !== width) {
-                  this.scrollWidth = width;
-                  this.scrollHeight = height;
-                  const newColumnWidth =
-                    (width - (columnCount - 1) * columnGap!) / columnCount;
-                  if (!itemInfoData?.length) {
-                    initData?.call(undefined, newColumnWidth);
-                  }
-                  this.setState({
-                    columnWidth: newColumnWidth,
-                  });
-                }
-              }}>
+          {...(rest as any)}>
+          <Animated.View style={[styles.container, containerStyle]}>
+            {renderHeader && <View>{renderHeader()}</View>}
+            <Animated.View
+              style={{ height: this.itemsRunwayOffset }}
+              onLayout={this.onItemsBoxLayout}>
               {items}
-            </View>
+            </Animated.View>
+            {renderFooter && <View>{renderFooter()}</View>}
           </Animated.View>
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: { position: 'relative' },
+});

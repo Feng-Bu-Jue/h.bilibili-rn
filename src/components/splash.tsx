@@ -5,7 +5,7 @@ import { View } from 'react-native';
 
 export const Splash = () => {
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <LottieView source={animations.loading} autoPlay loop />
     </View>
   );

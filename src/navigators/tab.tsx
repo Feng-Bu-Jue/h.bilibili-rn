@@ -15,16 +15,13 @@ import TabBarItem from '~/components/tabView/tabBarItem';
 import TabBar from '~/components/tabView/tabBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '~/constants/colors';
+import IconPeople from '~/assets/iconfont/IconPeople';
+import { layout } from '~/constants/layout';
 
 const Tab = createBottomTabNavigator();
 
-export type Tab = {
-  label: string;
-  icon: string;
-};
-
 const TestScreen = () => {
-  return <View style={[styles.scene, { backgroundColor: '#673ab7' }]} />;
+  return <View style={[{ backgroundColor: '#673ab7' }]} />;
 };
 
 const initialLayout = { width: Dimensions.get('window').width };
@@ -38,7 +35,7 @@ export function DrawListTabView() {
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'first', title: 'Draw' },
-    { key: 'second', title: 'Cosplay' },
+    { key: 'second', title: 'Photo' },
   ]);
 
   const insets = useSafeAreaInsets();
@@ -101,21 +98,29 @@ export function DrawListTabView() {
   );
 }
 
-const styles = StyleSheet.create({
-  scene: {
-    flex: 1,
-  },
-});
+export enum TabScreens {
+  Home = 'Home',
+  Me = 'Me',
+}
 
 const TabMenu = () => {
   return (
     <Tab.Navigator
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      tabBarOptions={{
+        activeTintColor: colors.pink,
+        inactiveTintColor: colors.black,
+        iconStyle: { ...layout.padding(0), ...layout.margin(0) },
+      }}
       screenOptions={({ route }) => ({
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         tabBarIcon: ({ focused, color, size }) => {
+          switch (route.name) {
+            case TabScreens.Home:
+              return <IconPicfill color={color} />;
+            case TabScreens.Me:
+              return <IconPeople color={color} />;
+          }
           // You can return any component that you like here!
-          return <IconPicfill />;
         },
         tabBarButton: ({
           children,
@@ -136,8 +141,8 @@ const TabMenu = () => {
           );
         },
       })}>
-      <Tab.Screen name="home1" component={DrawListTabView} />
-      <Tab.Screen name="home" component={TestScreen} />
+      <Tab.Screen name={TabScreens.Home} component={DrawListTabView} />
+      <Tab.Screen name={TabScreens.Me} component={TestScreen} />
     </Tab.Navigator>
   );
 };

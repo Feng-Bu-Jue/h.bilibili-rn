@@ -75,7 +75,7 @@ export default class DrawList extends BaseComponent<{
     return (
       <View style={[layout.flex(1)]}>
         <Waterfall
-          initData={(w) => this.fetchDrawItems(w)}
+          onInitData={(w) => this.fetchDrawItems(w)}
           columnCount={2}
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
@@ -146,7 +146,7 @@ export default class DrawList extends BaseComponent<{
               </View>
             );
           }}
-          onReachEnd={(w) => this.fetchDrawItems(w)}
+          onEndReached={(w) => this.fetchDrawItems(w)}
         />
       </View>
     );
