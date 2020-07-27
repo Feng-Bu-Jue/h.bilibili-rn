@@ -16,9 +16,11 @@ import TabBar from '~/components/tabView/tabBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '~/constants/colors';
 import IconPeople from '~/assets/iconfont/IconPeople';
-import { layout } from '~/constants/layout';
+import Animated from 'react-native-reanimated';
 
 const Tab = createBottomTabNavigator();
+// @ts-ignore
+const AnimatedInterpolate = Animated.interpolateNode || Animated.interpolate;
 
 const TestScreen = () => {
   return <View style={[{ backgroundColor: '#673ab7' }]} />;
@@ -87,7 +89,14 @@ export function DrawListTabView() {
               indicatorStyle={{ backgroundColor: colors.pink, height: 3 }}
               renderTabBarItem={(itemProps) => {
                 return (
-                  <TabBarItem {...itemProps} containerStyle={{ flex: 0 }} />
+                  <TabBarItem
+                    {...itemProps}
+                    containerStyle={{ flex: 1 }}
+                    labelStyle={{
+                      width: 50,
+                      textAlign: 'center',
+                    }}
+                  />
                 );
               }}
             />
@@ -109,7 +118,10 @@ const TabMenu = () => {
       tabBarOptions={{
         activeTintColor: colors.pink,
         inactiveTintColor: colors.black,
-        iconStyle: { ...layout.padding(0), ...layout.margin(0) },
+        iconStyle: { flex: 0, marginBottom: 10 },
+        labelStyle: {
+          marginBottom: 6,
+        },
       }}
       screenOptions={({ route }) => ({
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

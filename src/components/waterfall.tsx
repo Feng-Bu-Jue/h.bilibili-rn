@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   View,
+  Text,
   NativeSyntheticEvent,
   NativeScrollEvent,
   StyleProp,
@@ -9,6 +10,11 @@ import {
   Animated,
   LayoutChangeEvent,
   StyleSheet,
+  RefreshControl,
+  RefreshControlPropsIOS,
+  RefreshControlPropsAndroid,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 
 export type WaterfallProps<TItem> = {
@@ -21,12 +27,12 @@ export type WaterfallProps<TItem> = {
     columnWidth: number,
     index: number,
   ) => React.ReactNode;
-  renderHeader: () => React.ReactNode;
-  renderFooter: () => React.ReactNode;
-  onInitData: (columnWidth: number) => void;
-  onInfinite?: (columnWidth: number) => void;
-  onRefesh: (columnWidth: number) => void;
+  renderLoadMore?: () => React.ReactNode;
+  onInitData: (columnWidth: number) => Promise<void>;
+  onInfinite?: (columnWidth: number) => Promise<void>;
+  onRefresh?: (columnWidth: number) => Promise<void>;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  refreshControlProps?: RefreshControlPropsIOS & RefreshControlPropsAndroid;
   style?: StyleProp<ImageStyle>;
   containerStyle?: StyleProp<ImageStyle>;
 } & ScrollViewProps;
@@ -34,6 +40,8 @@ export type WaterfallProps<TItem> = {
 type State = {
   columnWidth: number;
   offset: number;
+  isRefreshing: boolean;
+  isLoading: boolean;
 };
 
 export type ItemInfo<TItem> = {
@@ -48,8 +56,19 @@ export default class Waterfall<TItem = any> extends React.Component<
   static defaultProps: Partial<WaterfallProps<any>> = {
     columnGap: 0,
     bufferAmount: 10,
+    renderLoadMore: () => (
+      <View style={styles.loadingMoreBox}>
+        <ActivityIndicator
+          style={styles.loadingMoreIndicator}
+          size="small"
+          color="black"
+        />
+        <Text>{'loading'}</Text>
+      </View>
+    ),
   };
 
+  scrollViewRef: ScrollView | null = null;
   scrollOffset = new Animated.Value(0);
   itemsRunwayOffset = new Animated.Value(0);
 
@@ -63,11 +82,25 @@ export default class Waterfall<TItem = any> extends React.Component<
   constructor(props: WaterfallProps<TItem>) {
     super(props);
     this.itemOffsetTops = Array(this.props.columnCount).fill(0);
-    this.state = { offset: 0, columnWidth: 0 } as State;
+    const state: State = {
+      offset: 0,
+      columnWidth: 0,
+      isRefreshing: false,
+      isLoading: false,
+    };
+    this.state = state;
   }
 
   getColumnWidth = () => {
     return this.state.columnWidth;
+  };
+
+  scrollTo = (
+    y?: number | { x?: number; y?: number; animated?: boolean },
+    x?: number,
+    animated?: boolean,
+  ): void => {
+    this.scrollViewRef?.scrollTo(y, x, animated);
   };
 
   private onScroll = ({
@@ -78,9 +111,29 @@ export default class Waterfall<TItem = any> extends React.Component<
     },
   }: NativeSyntheticEvent<NativeScrollEvent>) => {
     this.setState({ offset: y });
-    if (y + height >= contentHeight - 20) {
-      this.props.onInfinite?.call(undefined, this.state.columnWidth);
+    if (
+      y + height >= contentHeight - 20 &&
+      this.lastMeasuredIndex === this.props.itemInfoData.length - 1
+    ) {
+      this.onInfinite();
     }
+  };
+
+  private onRefresh = () => {
+    this.setState({ isRefreshing: true });
+    return this.props.onRefresh!(this.state.columnWidth).finally(() => {
+      this.lastMeasuredIndex = -1;
+      this.itemPositions = [];
+      this.itemOffsetTops = Array(this.props.columnCount).fill(0);
+      this.setState({ isRefreshing: false });
+    });
+  };
+
+  private onInfinite = () => {
+    this.setState({ isLoading: true });
+    return this.props.onInfinite!(this.state.columnWidth).finally(() => {
+      this.setState({ isLoading: false });
+    });
   };
 
   private onItemsBoxLayout = ({
@@ -89,19 +142,26 @@ export default class Waterfall<TItem = any> extends React.Component<
     },
   }: LayoutChangeEvent) => {
     if (this.scrollWidth !== width) {
-      const { columnCount, columnGap, itemInfoData, onInitData } = this.props;
+      const { columnCount, columnGap, itemInfoData } = this.props;
 
       this.scrollWidth = width;
       this.scrollHeight = height;
       const newColumnWidth =
         (width - (columnCount - 1) * columnGap!) / columnCount;
       if (!itemInfoData?.length) {
-        onInitData?.call(undefined, newColumnWidth);
+        this.onInitData(newColumnWidth);
       }
       this.setState({
         columnWidth: newColumnWidth,
       });
     }
+  };
+
+  private onInitData = (columnWidth: number) => {
+    this.setState({ isRefreshing: true });
+    return this.props.onInitData(columnWidth).finally(() => {
+      this.setState({ isRefreshing: false });
+    });
   };
 
   private getOffsetColumn(predicate: (a: number, b: number) => boolean) {
@@ -239,15 +299,17 @@ export default class Waterfall<TItem = any> extends React.Component<
   render() {
     const {
       renderItem,
-      renderHeader,
-      renderFooter,
+      renderLoadMore,
       itemInfoData,
-      style,
       onScroll,
+      onRefresh,
+      onInfinite,
+      style,
       containerStyle,
+      refreshControlProps,
       ...rest
     } = this.props;
-    const { columnWidth } = this.state;
+    const { columnWidth, isLoading } = this.state;
     const items: React.ReactNodeArray = [];
 
     if (columnWidth && itemInfoData.length) {
@@ -258,9 +320,8 @@ export default class Waterfall<TItem = any> extends React.Component<
         items.push(
           <View
             key={i}
-            // eslint-disable-next-line react-native/no-inline-styles
             style={{
-              position: 'absolute',
+              ...styles.item,
               top: posistion.offsetTop,
               left: posistion.offsetLeft,
               width: columnWidth,
@@ -276,33 +337,51 @@ export default class Waterfall<TItem = any> extends React.Component<
     }
 
     return (
-      <View
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{ flex: 1 }}>
-        <Animated.ScrollView
+      <View style={styles.container}>
+        <ScrollView
+          ref={(r) => (this.scrollViewRef = r)}
           style={style}
           bounces={false}
           onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
             this.onScroll(e);
             onScroll?.call(undefined, e);
           }}
-          scrollEventThrottle={100}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={this.state.isRefreshing}
+                onRefresh={this.onRefresh}
+                {...refreshControlProps}
+              />
+            ) : undefined
+          }
+          scrollEventThrottle={20}
           {...(rest as any)}>
           <Animated.View style={[styles.container, containerStyle]}>
-            {renderHeader && <View>{renderHeader()}</View>}
             <Animated.View
               style={{ height: this.itemsRunwayOffset }}
               onLayout={this.onItemsBoxLayout}>
               {items}
             </Animated.View>
-            {renderFooter && <View>{renderFooter()}</View>}
           </Animated.View>
-        </Animated.ScrollView>
+          {!!onInfinite && isLoading && renderLoadMore?.call(undefined)}
+        </ScrollView>
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  container: { position: 'relative' },
+  container: { flex: 1 },
+  item: {
+    position: 'absolute',
+  },
+  loadingMoreBox: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  loadingMoreIndicator: {
+    marginRight: 10,
+  },
 });

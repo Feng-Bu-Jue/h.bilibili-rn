@@ -84,6 +84,34 @@ export default class TabBarItem<T extends Route> extends React.Component<
     }
   });
 
+  private getActiveFontSize = memoize(
+    (position: Animated.Node<number>, routes: Route[], tabIndex: number) => {
+      if (routes.length > 1) {
+        const inputRange = routes.map((_, i) => i);
+
+        return AnimatedInterpolate(position, {
+          inputRange,
+          outputRange: inputRange.map((i) => (i === tabIndex ? 16 : 12)),
+        });
+      } else {
+        return 1;
+      }
+    },
+  );
+
+  private getInactiveFontSize = memoize((position, routes, tabIndex) => {
+    if (routes.length > 1) {
+      const inputRange = routes.map((_: Route, i: number) => i);
+
+      return AnimatedInterpolate(position, {
+        inputRange,
+        outputRange: inputRange.map((i: number) => (i === tabIndex ? 12 : 16)),
+      });
+    } else {
+      return 0;
+    }
+  });
+
   render() {
     const {
       route,
@@ -122,6 +150,17 @@ export default class TabBarItem<T extends Route> extends React.Component<
       tabIndex,
     );
 
+    const activeFontSize = this.getActiveFontSize(
+      position,
+      navigationState.routes,
+      tabIndex,
+    );
+    const inactiveFontSize = this.getInactiveFontSize(
+      position,
+      navigationState.routes,
+      tabIndex,
+    );
+
     let icon: React.ReactNode | null = null;
     let label: React.ReactNode | null = null;
 
@@ -155,7 +194,15 @@ export default class TabBarItem<T extends Route> extends React.Component<
     const renderLabel =
       renderLabelPassed !== undefined
         ? renderLabelPassed
-        : ({ route, color }: { route: T; color: string }) => {
+        : ({
+            route,
+            color,
+            focused,
+          }: {
+            route: T;
+            color: string;
+            focused: boolean;
+          }) => {
             const labelText = getLabelText({ route });
 
             if (typeof labelText === 'string') {
@@ -167,6 +214,9 @@ export default class TabBarItem<T extends Route> extends React.Component<
                     icon ? { marginTop: 0 } : null,
                     { color },
                     labelStyle,
+                    { fontSize: focused ? activeFontSize : inactiveFontSize },
+                    // eslint-disable-next-line react-native/no-inline-styles
+                    { fontWeight: focused ? 'bold' : 'normal' },
                   ]}>
                   {labelText}
                 </Animated.Text>
@@ -190,11 +240,11 @@ export default class TabBarItem<T extends Route> extends React.Component<
 
       label = (
         <View>
-          <Animated.View style={{ opacity: inactiveOpacity }}>
+          <Animated.View
+            style={[StyleSheet.absoluteFill, { opacity: inactiveOpacity }]}>
             {inactiveLabel}
           </Animated.View>
-          <Animated.View
-            style={[StyleSheet.absoluteFill, { opacity: activeOpacity }]}>
+          <Animated.View style={[{ opacity: activeOpacity }]}>
             {activeLabel}
           </Animated.View>
         </View>

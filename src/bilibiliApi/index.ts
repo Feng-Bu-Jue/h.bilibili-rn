@@ -16,6 +16,7 @@ export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
   };
 };
 
+//TODO 先wrap下 不清楚为啥不支持 直接使用parameter decorator, 马萨卡 要去看babel的实现...
 export const QueryMapW = () => {
   return QueryMap;
 };

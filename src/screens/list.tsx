@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { observer } from 'mobx-react';
 import FastImage from 'react-native-fast-image';
@@ -6,14 +7,16 @@ import {
   BiliBiliProtocol,
   LinkDrawResultList,
 } from '~/bilibiliApi/typings';
-import { Waterfall, BaseComponent } from '~/components';
-import { ItemInfo } from '~/components/waterfall';
+import { BaseComponent } from '~/components';
+import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction } from 'mobx';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, Text } from 'react-native';
 import { Response } from 'ts-retrofit';
 import { layout } from '~/constants/layout';
 import { colors } from '~/constants/colors';
+import IconArrowUp from '~/assets/iconfont/IconArrowUp';
+import { TouchableNativeFeedback } from 'react-native-gesture-handler';
 
 @observer
 export default class DrawList extends BaseComponent<{
@@ -23,6 +26,8 @@ export default class DrawList extends BaseComponent<{
   columnCount = 2;
   columnGap = 10;
 
+  waterfallRef: Waterfall | null = null;
+
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
 
@@ -30,7 +35,7 @@ export default class DrawList extends BaseComponent<{
     super(props);
   }
 
-  async fetchDrawItems(columnWidth: number) {
+  async fetchDrawItems(columnWidth: number, reload: boolean = false) {
     try {
       let response: Response<BiliBiliProtocol<LinkDrawResultList>>;
       if (this.props.pageType === 'draw') {
@@ -51,17 +56,20 @@ export default class DrawList extends BaseComponent<{
       if (response?.data?.data.total_count > 0) {
         this.pageNum++;
         runInAction(() => {
-          this.drawItems = this.drawItems.concat(
-            response.data.data.items.map((item) => {
-              const ratio =
-                item.item.pictures[0].img_height /
-                item.item.pictures[0].img_width;
-              return {
-                size: ratio * columnWidth + 100,
-                item: item,
-              };
-            }),
-          );
+          const mappingResult = response.data.data.items.map((item) => {
+            const ratio =
+              item.item.pictures[0].img_height /
+              item.item.pictures[0].img_width;
+            return {
+              size: ratio * columnWidth + 100,
+              item: item,
+            };
+          });
+          if (reload) {
+            this.drawItems = mappingResult;
+          } else {
+            this.drawItems = this.drawItems.concat(mappingResult);
+          }
         });
       }
     } catch (e) {
@@ -70,12 +78,15 @@ export default class DrawList extends BaseComponent<{
   }
 
   render(): React.ReactNode {
-    const { CardItem } = Styles;
-    console.log(CardItem);
     return (
-      <View style={[layout.flex(1)]}>
+      <View
+        style={{
+          flex: 1,
+          position: 'relative',
+        }}>
         <Waterfall
-          onInitData={(w) => this.fetchDrawItems(w)}
+          ref={(r) => (this.waterfallRef = r)}
+          onInitData={(columnWidth) => this.fetchDrawItems(columnWidth)}
           columnCount={2}
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
@@ -146,18 +157,40 @@ export default class DrawList extends BaseComponent<{
               </View>
             );
           }}
-          onEndReached={(w) => this.fetchDrawItems(w)}
+          onRefresh={(columnWidth) => {
+            this.pageNum = 1;
+            return this.fetchDrawItems(columnWidth, true);
+          }}
+          refreshControlProps={{ colors: [colors.pink] }}
+          onInfinite={(columnWidth) => this.fetchDrawItems(columnWidth)}
         />
+        <View
+          style={{
+            position: 'absolute',
+            elevation: 4,
+            right: 20,
+            bottom: 40,
+            borderRadius: 20,
+            overflow: 'hidden',
+          }}>
+          <TouchableNativeFeedback
+            onPress={() => {
+              this.waterfallRef?.scrollTo({
+                y: 0,
+                animated: true,
+              });
+            }}
+            style={{
+              height: 40,
+              width: 40,
+              backgroundColor: colors.white,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <IconArrowUp size={30} />
+          </TouchableNativeFeedback>
+        </View>
       </View>
     );
   }
 }
-
-const Styles = StyleSheet.create({
-  CardItem: {
-    backgroundColor: colors.pink,
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-  },
-});
