@@ -1,4 +1,4 @@
-import { sizes } from './size';
+import { sizes } from './sizes';
 import { ViewStyle } from 'react-native';
 import { colors } from './colors';
 

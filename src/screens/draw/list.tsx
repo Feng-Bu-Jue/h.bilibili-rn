@@ -11,18 +11,26 @@ import { BaseComponent } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction } from 'mobx';
-import { View, Text } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableNativeFeedback,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { Response } from 'ts-retrofit';
-import { layout } from '~/constants/layout';
-import { colors } from '~/constants/colors';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
-import { TouchableNativeFeedback } from 'react-native-gesture-handler';
+import { layout, colors } from '~/constants';
+import { DrawListProps } from '~/typings/navigation';
+import { HomeStackScreens } from '~/typings/screens';
+
+type Props = {
+  pageType: 'draw' | 'photo';
+} & DrawListProps;
 
 @observer
-export default class DrawList extends BaseComponent<{
-  pageType: 'draw' | 'cos';
-}> {
+export default class DrawList extends BaseComponent<Props> {
   pageNum = 1;
+  pageSize = 20;
   columnCount = 2;
   columnGap = 10;
 
@@ -31,7 +39,7 @@ export default class DrawList extends BaseComponent<{
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
 
-  constructor(props: any) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -41,19 +49,19 @@ export default class DrawList extends BaseComponent<{
       if (this.props.pageType === 'draw') {
         response = await LinkDrawApi.getDocs({
           page_num: this.pageNum,
-          page_size: 20,
+          page_size: this.pageSize,
           type: 'hot',
           category: 'illustration',
         });
       } else {
         response = await LinkDrawApi.getPhotos({
           page_num: this.pageNum,
-          page_size: 20,
+          page_size: this.pageSize,
           type: 'hot',
           category: 'all',
         });
       }
-      if (response?.data?.data.total_count > 0) {
+      if (this.pageSize * this.pageNum < response?.data?.data.total_count) {
         this.pageNum++;
         runInAction(() => {
           const mappingResult = response.data.data.items.map((item) => {
@@ -87,7 +95,7 @@ export default class DrawList extends BaseComponent<{
         <Waterfall
           ref={(r) => (this.waterfallRef = r)}
           onInitData={(columnWidth) => this.fetchDrawItems(columnWidth)}
-          columnCount={2}
+          columnCount={3}
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
           bufferAmount={10}
@@ -104,13 +112,19 @@ export default class DrawList extends BaseComponent<{
             columnWidth: number,
           ) => {
             return (
-              <View
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  this.props.navigation.push(HomeStackScreens.DrawDetail);
+                }}
                 style={[
                   layout.margin(10, 0),
-                  { backgroundColor: colors.white, borderRadius: 10 },
+                  {
+                    backgroundColor: colors.white,
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                  },
                 ]}>
                 <FastImage
-                  // eslint-disable-next-line react-native/no-inline-styles
                   style={{
                     height: size - 100,
                     width: columnWidth,
@@ -136,7 +150,6 @@ export default class DrawList extends BaseComponent<{
                       padding: 5,
                     }}>
                     <FastImage
-                      // eslint-disable-next-line react-native/no-inline-styles
                       style={{
                         height: 24,
                         width: 24,
@@ -149,12 +162,14 @@ export default class DrawList extends BaseComponent<{
                       }}
                       resizeMode={FastImage.resizeMode.contain}
                     />
-                    <Text style={{ fontSize: 14, color: colors.charcoal }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ fontSize: 14, color: colors.charcoal }}>
                       {item.user.name}
                     </Text>
                   </View>
                 </View>
-              </View>
+              </TouchableWithoutFeedback>
             );
           }}
           onRefresh={(columnWidth) => {

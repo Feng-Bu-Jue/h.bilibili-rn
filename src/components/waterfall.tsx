@@ -5,7 +5,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   StyleProp,
-  ImageStyle,
+  ViewStyle,
   ScrollViewProps,
   Animated,
   LayoutChangeEvent,
@@ -27,15 +27,15 @@ export type WaterfallProps<TItem> = {
     columnWidth: number,
     index: number,
   ) => React.ReactNode;
-  renderLoadMore?: () => React.ReactNode;
+  renderLoadMore?: (isLoading: boolean) => React.ReactNode;
   onInitData: (columnWidth: number) => Promise<void>;
   onInfinite?: (columnWidth: number) => Promise<void>;
   onRefresh?: (columnWidth: number) => Promise<void>;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   refreshControlProps?: RefreshControlPropsIOS & RefreshControlPropsAndroid;
-  style?: StyleProp<ImageStyle>;
-  containerStyle?: StyleProp<ImageStyle>;
-} & ScrollViewProps;
+  style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+} & Partial<ScrollViewProps>;
 
 type State = {
   columnWidth: number;
@@ -56,8 +56,13 @@ export default class Waterfall<TItem = any> extends React.Component<
   static defaultProps: Partial<WaterfallProps<any>> = {
     columnGap: 0,
     bufferAmount: 10,
-    renderLoadMore: () => (
-      <View style={styles.loadingMoreBox}>
+    renderLoadMore: (isLoading) => (
+      <View
+        style={[
+          styles.loadingMoreBox,
+          // eslint-disable-next-line react-native/no-inline-styles
+          isLoading ? { opacity: 1 } : { opacity: 0 },
+        ]}>
         <ActivityIndicator
           style={styles.loadingMoreIndicator}
           size="small"
@@ -73,7 +78,7 @@ export default class Waterfall<TItem = any> extends React.Component<
   itemsRunwayOffset = new Animated.Value(0);
 
   scrollHeight = 0;
-  scrollWidth = 0;
+  ItemsRunwayWidth = 0;
   lastMeasuredIndex = -1;
 
   itemPositions: Array<{ offsetLeft: number; offsetTop: number }> = [];
@@ -113,7 +118,8 @@ export default class Waterfall<TItem = any> extends React.Component<
     this.setState({ offset: y });
     if (
       y + height >= contentHeight - 20 &&
-      this.lastMeasuredIndex === this.props.itemInfoData.length - 1
+      this.lastMeasuredIndex === this.props.itemInfoData.length - 1 &&
+      !this.state.isRefreshing
     ) {
       this.onInfinite();
     }
@@ -136,16 +142,25 @@ export default class Waterfall<TItem = any> extends React.Component<
     });
   };
 
-  private onItemsBoxLayout = ({
+  private onScrollLayout = ({
     nativeEvent: {
-      layout: { width, height },
+      layout: { height },
     },
   }: LayoutChangeEvent) => {
-    if (this.scrollWidth !== width) {
+    if (this.scrollHeight !== height) {
+      this.scrollHeight = height;
+    }
+  };
+
+  private onItemsRunwayLayout = ({
+    nativeEvent: {
+      layout: { width },
+    },
+  }: LayoutChangeEvent) => {
+    if (this.ItemsRunwayWidth !== width) {
       const { columnCount, columnGap, itemInfoData } = this.props;
 
-      this.scrollWidth = width;
-      this.scrollHeight = height;
+      this.ItemsRunwayWidth = width;
       const newColumnWidth =
         (width - (columnCount - 1) * columnGap!) / columnCount;
       if (!itemInfoData?.length) {
@@ -165,34 +180,32 @@ export default class Waterfall<TItem = any> extends React.Component<
   };
 
   private getOffsetColumn(predicate: (a: number, b: number) => boolean) {
-    let index = 0;
-    let value = 0;
-    if (this.itemOffsetTops.length) {
-      value = this.itemOffsetTops.reduce((p, c, i) => {
-        if (predicate(p, c)) {
-          index = i - 1;
-          return p;
-        } else {
-          index = i;
-          return c;
-        }
-      });
-    }
-    return [index, value];
+    let index: undefined | number;
+    let value: undefined | number;
+    this.itemOffsetTops.forEach((item, i) => {
+      if (
+        (index === undefined && value === undefined) ||
+        predicate(item, value!)
+      ) {
+        value = item;
+        index = i;
+      }
+    });
+    return [index!, value!];
   }
 
   getLowestOffsetColumn() {
-    return this.getOffsetColumn((a, b) => a <= b);
+    return this.getOffsetColumn((p, c) => p < c);
   }
 
   getHighestOffsetColumn() {
-    return this.getOffsetColumn((a, b) => a >= b);
+    return this.getOffsetColumn((p, c) => p > c);
   }
 
   evaluateVisibleRange() {
     let { offset } = this.state;
     const { itemInfoData, bufferAmount } = this.props;
-    const maxOffset = offset + this.scrollHeight * 2;
+    const maxOffset = offset + this.scrollHeight * 1.5;
     const itemCount = itemInfoData.length;
     let start = 0;
 
@@ -217,7 +230,6 @@ export default class Waterfall<TItem = any> extends React.Component<
         compare,
       });
     }
-
     offset =
       this.getPositionForIndex(start).offsetTop + itemInfoData[start].size;
 
@@ -309,21 +321,21 @@ export default class Waterfall<TItem = any> extends React.Component<
       refreshControlProps,
       ...rest
     } = this.props;
-    const { columnWidth, isLoading } = this.state;
+    const { columnWidth, isLoading, isRefreshing } = this.state;
     const items: React.ReactNodeArray = [];
 
     if (columnWidth && itemInfoData.length) {
       const [start, end] = this.evaluateVisibleRange();
 
       for (let i = start; i <= end; i++) {
-        const posistion = this.getPositionForIndex(i);
+        const position = this.getPositionForIndex(i);
         items.push(
           <View
             key={i}
             style={{
               ...styles.item,
-              top: posistion.offsetTop,
-              left: posistion.offsetLeft,
+              top: position.offsetTop,
+              left: position.offsetLeft,
               width: columnWidth,
               height: itemInfoData[i].size,
             }}>
@@ -331,21 +343,22 @@ export default class Waterfall<TItem = any> extends React.Component<
           </View>,
         );
       }
-
       const runwayOffset = this.getHighestOffsetColumn()[1];
       this.itemsRunwayOffset.setValue(runwayOffset);
     }
 
     return (
-      <View style={styles.container}>
+      <View style={[styles.container]}>
         <ScrollView
           ref={(r) => (this.scrollViewRef = r)}
+          scrollEnabled={!isRefreshing}
           style={style}
           bounces={false}
           onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
             this.onScroll(e);
             onScroll?.call(undefined, e);
           }}
+          onLayout={this.onScrollLayout}
           refreshControl={
             onRefresh ? (
               <RefreshControl
@@ -360,11 +373,11 @@ export default class Waterfall<TItem = any> extends React.Component<
           <Animated.View style={[styles.container, containerStyle]}>
             <Animated.View
               style={{ height: this.itemsRunwayOffset }}
-              onLayout={this.onItemsBoxLayout}>
+              onLayout={this.onItemsRunwayLayout}>
               {items}
             </Animated.View>
           </Animated.View>
-          {!!onInfinite && isLoading && renderLoadMore?.call(undefined)}
+          {!!onInfinite && renderLoadMore?.call(undefined, isLoading)}
         </ScrollView>
       </View>
     );
