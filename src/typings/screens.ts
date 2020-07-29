@@ -3,7 +3,7 @@ export enum TabScreens {
   Me = 'Me',
 }
 
-export enum HomeStackScreens {
+export enum StackScreens {
   DrawList = 'DrawList',
   DrawDetail = 'DrawDetail',
 }

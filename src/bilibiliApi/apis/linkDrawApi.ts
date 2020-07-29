@@ -7,6 +7,7 @@ import {
   DrawCategory,
   ListType,
   PhotoCategory,
+  LinkDrawResult,
 } from '../typings';
 
 @ApiDescriptor('apivc')
@@ -35,6 +36,16 @@ export class LinkDraw extends BaseService {
     },
   ): Promise<Response<BiliBiliProtocol<LinkDrawResultList>>> {
     return <Response<BiliBiliProtocol<LinkDrawResultList>>>{};
+  }
+
+  @GET('link_draw/v1/doc/detail')
+  async getDocDetail(
+    @QueryMapW()
+    query: {
+      doc_id: number;
+    },
+  ): Promise<Response<BiliBiliProtocol<LinkDrawResult>>> {
+    return <Response<BiliBiliProtocol<LinkDrawResult>>>{};
   }
 }
 

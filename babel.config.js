@@ -5,12 +5,6 @@ module.exports = function (api) {
     plugins: [
       ['babel-plugin-root-import', { rootPathSuffix: 'src' }],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
-      [
-        '@babel/plugin-proposal-class-properties',
-        {
-          loose: true,
-        },
-      ],
       'babel-plugin-parameter-decorator',
     ],
   };

@@ -78,7 +78,7 @@ export default class Waterfall<TItem = any> extends React.Component<
   itemsRunwayOffset = new Animated.Value(0);
 
   scrollHeight = 0;
-  ItemsRunwayWidth = 0;
+  itemsRunwayWidth = 0;
   lastMeasuredIndex = -1;
 
   itemPositions: Array<{ offsetLeft: number; offsetTop: number }> = [];
@@ -157,10 +157,10 @@ export default class Waterfall<TItem = any> extends React.Component<
       layout: { width },
     },
   }: LayoutChangeEvent) => {
-    if (this.ItemsRunwayWidth !== width) {
+    if (this.itemsRunwayWidth !== width) {
       const { columnCount, columnGap, itemInfoData } = this.props;
 
-      this.ItemsRunwayWidth = width;
+      this.itemsRunwayWidth = width;
       const newColumnWidth =
         (width - (columnCount - 1) * columnGap!) / columnCount;
       if (!itemInfoData?.length) {

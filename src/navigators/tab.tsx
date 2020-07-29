@@ -1,22 +1,27 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import { Dimensions, View, StyleSheet } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { colors } from '~/constants';
+import { TabScreens } from '~/typings/screens';
+import IconPicfill from '~/assets/iconfont/IconPicfill';
+import IconPeople from '~/assets/iconfont/IconPeople';
+import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs/lib/typescript/src/types';
+import { View, Dimensions, StyleSheet } from 'react-native';
+import { TouchableNative } from '~/components';
 import DrawList from '~/screens/draw/list';
+import { TabView } from 'react-native-tab-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabBarItem from '~/components/tabView/tabBarItem';
 import TabBar from '~/components/tabView/tabBar';
-import { colors } from '~/constants';
 import { DrawListProps } from '~/typings/navigation';
-import { TabView } from 'react-native-tab-view';
-import { HomeStackScreens } from '~/typings/screens';
-import DrawDetail from '~/screens/draw/detail';
 
-const HomeStack = createStackNavigator();
-
+const Tab = createBottomTabNavigator();
 const initialLayout = { width: Dimensions.get('window').width };
+const TestScreen = () => {
+  return <View />;
+};
 
-export function DrawListTabView(props: DrawListProps) {
+function DrawListTabView(props: DrawListProps) {
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'first', title: 'Draw' },
@@ -108,17 +113,44 @@ export function DrawListTabView(props: DrawListProps) {
   );
 }
 
-export function HomeStackScreen() {
+export const TabMenu = () => {
   return (
-    <HomeStack.Navigator>
-      <HomeStack.Screen
-        name={HomeStackScreens.DrawList}
-        component={DrawListTabView}
-      />
-      <HomeStack.Screen
-        name={HomeStackScreens.DrawDetail}
-        component={DrawDetail}
-      />
-    </HomeStack.Navigator>
+    <Tab.Navigator
+      tabBarOptions={{
+        activeTintColor: colors.pink,
+        inactiveTintColor: colors.black,
+        iconStyle: { flex: 0, marginBottom: 10 },
+        labelStyle: {
+          marginBottom: 6,
+        },
+      }}
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color }) => {
+          switch (route.name) {
+            case TabScreens.Home:
+              return <IconPicfill color={color} />;
+            case TabScreens.Me:
+              return <IconPeople color={color} />;
+          }
+        },
+        tabBarButton: ({
+          children,
+          onPress,
+          accessibilityRole,
+          ...rest
+        }: BottomTabBarButtonProps) => {
+          return (
+            <TouchableNative
+              {...rest}
+              accessibilityRole={accessibilityRole}
+              onPress={onPress}>
+              {children}
+            </TouchableNative>
+          );
+        },
+      })}>
+      <Tab.Screen name={TabScreens.Home} component={DrawListTabView} />
+      <Tab.Screen name={TabScreens.Me} component={TestScreen} />
+    </Tab.Navigator>
   );
-}
+};

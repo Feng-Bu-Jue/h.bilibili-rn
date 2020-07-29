@@ -21,7 +21,7 @@ import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
 import { DrawListProps } from '~/typings/navigation';
-import { HomeStackScreens } from '~/typings/screens';
+import { StackScreens } from '~/typings/screens';
 
 type Props = {
   pageType: 'draw' | 'photo';
@@ -95,7 +95,7 @@ export default class DrawList extends BaseComponent<Props> {
         <Waterfall
           ref={(r) => (this.waterfallRef = r)}
           onInitData={(columnWidth) => this.fetchDrawItems(columnWidth)}
-          columnCount={3}
+          columnCount={2}
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
           bufferAmount={10}
@@ -112,64 +112,70 @@ export default class DrawList extends BaseComponent<Props> {
             columnWidth: number,
           ) => {
             return (
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  this.props.navigation.push(HomeStackScreens.DrawDetail);
-                }}
+              <View
                 style={[
                   layout.margin(10, 0),
                   {
                     backgroundColor: colors.white,
                     borderRadius: 10,
-                    overflow: 'hidden',
                   },
                 ]}>
-                <FastImage
-                  style={{
-                    height: size - 100,
-                    width: columnWidth,
-                    borderTopLeftRadius: 10,
-                    borderTopRightRadius: 10,
-                  }}
-                  source={{
-                    uri: item.item.pictures[0].img_src + '@512w_384h_1e.webp',
-                    priority: FastImage.priority.high,
-                  }}
-                  resizeMode={FastImage.resizeMode.contain}
-                />
-                <View style={{ height: 90, ...layout.padding(8) }}>
-                  <Text
-                    numberOfLines={1}
-                    style={{ fontSize: 14, color: colors.black }}>
-                    {item.item.title}{' '}
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      padding: 5,
-                    }}>
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    this.props.navigation.push(StackScreens.DrawDetail, {
+                      docId: item.item.doc_id,
+                    });
+                  }}>
+                  <View>
                     <FastImage
                       style={{
-                        height: 24,
-                        width: 24,
-                        marginRight: 10,
-                        borderRadius: 24,
+                        height: size - 100,
+                        width: columnWidth,
+                        borderTopLeftRadius: 10,
+                        borderTopRightRadius: 10,
                       }}
                       source={{
-                        uri: `${item.user.head_url}@${24}w_${24}h_1e.webp`,
+                        uri:
+                          item.item.pictures[0].img_src + '@512w_384h_1e.webp',
                         priority: FastImage.priority.high,
                       }}
                       resizeMode={FastImage.resizeMode.contain}
                     />
-                    <Text
-                      numberOfLines={1}
-                      style={{ fontSize: 14, color: colors.charcoal }}>
-                      {item.user.name}
-                    </Text>
+                    <View style={{ height: 90, ...layout.padding(8) }}>
+                      <Text
+                        numberOfLines={1}
+                        style={{ fontSize: 14, color: colors.black }}>
+                        {item.item.title}
+                      </Text>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          padding: 5,
+                        }}>
+                        <FastImage
+                          style={{
+                            height: 24,
+                            width: 24,
+                            marginRight: 10,
+                            borderRadius: 24,
+                          }}
+                          source={{
+                            uri: `${item.user.head_url}@${24}w_${24}h_1e.webp`,
+                            priority: FastImage.priority.high,
+                          }}
+                          resizeMode={FastImage.resizeMode.contain}
+                        />
+                        <Text
+                          numberOfLines={1}
+                          style={{ fontSize: 14, color: colors.charcoal }}>
+                          {item.user.name}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </TouchableWithoutFeedback>
+                </TouchableWithoutFeedback>
+              </View>
             );
           }}
           onRefresh={(columnWidth) => {

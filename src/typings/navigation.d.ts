@@ -1,11 +1,13 @@
-import { HomeStackScreens } from './screens';
+import { StackScreens } from './screens';
 import { StackScreenProps } from '@react-navigation/stack';
 
 type RootParamList = DrawStackParamList;
 
 type DrawStackParamList = {
-  [HomeStackScreens.DrawDetail]: undefined;
-  [HomeStackScreens.DrawList]: undefined;
+  [StackScreens.DrawList]: undefined;
+  [StackScreens.DrawDetail]: {
+    docId: number;
+  };
 };
 
 type BaseScreenProps<RouteName extends keyof RootParamList> = StackScreenProps<
