@@ -32,7 +32,7 @@ export default class DrawList extends BaseComponent<Props> {
   pageNum = 1;
   pageSize = 20;
   columnCount = 2;
-  columnGap = 10;
+  columnGap = 8;
 
   waterfallRef: Waterfall | null = null;
 
@@ -117,7 +117,7 @@ export default class DrawList extends BaseComponent<Props> {
                   layout.margin(10, 0),
                   {
                     backgroundColor: colors.white,
-                    borderRadius: 10,
+                    borderRadius: 5,
                   },
                 ]}>
                 <TouchableWithoutFeedback
@@ -131,8 +131,8 @@ export default class DrawList extends BaseComponent<Props> {
                       style={{
                         height: size - 100,
                         width: columnWidth,
-                        borderTopLeftRadius: 10,
-                        borderTopRightRadius: 10,
+                        borderTopLeftRadius: 5,
+                        borderTopRightRadius: 5,
                       }}
                       source={{
                         uri:
@@ -208,7 +208,9 @@ export default class DrawList extends BaseComponent<Props> {
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-            <IconArrowUp size={30} />
+            <View>
+              <IconArrowUp size={30} />
+            </View>
           </TouchableNativeFeedback>
         </View>
       </View>

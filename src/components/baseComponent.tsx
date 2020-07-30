@@ -45,7 +45,6 @@ export class BaseComponentWithAnimatedHeader<
 > extends BaseComponent<P, S, SS> {
   @observable
   protected $isHeaderTransparent: boolean = true;
-  @observable
   protected $scolloffsetY: Animated.Value = new Animated.Value(0);
   protected $currentHeaderStatus?: HeaderStatus;
 

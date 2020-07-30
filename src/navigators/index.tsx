@@ -1,11 +1,28 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { TabScreens, StackScreens } from '~/typings/screens';
-import { createStackNavigator } from '@react-navigation/stack';
+import {
+  createStackNavigator,
+  StackNavigationOptions,
+} from '@react-navigation/stack';
 import DrawDetail from '~/screens/draw/detail';
 import { TabMenu } from './tab';
+import { sizes, colors } from '~/constants';
+import { Platform, StyleSheet } from 'react-native';
 
 const Stack = createStackNavigator();
+
+const defaultScreenOptions: StackNavigationOptions = {
+  ...StyleSheet.create({
+    headerStyle: {
+      height: sizes.headerHeight,
+      backgroundColor: colors.pink,
+    },
+  }),
+  headerStatusBarHeight: Platform.select({
+    android: sizes.statuHeight,
+  }),
+};
 
 export const Router = () => {
   return (
@@ -13,9 +30,9 @@ export const Router = () => {
       <Stack.Navigator
         screenOptions={({ route }) => {
           if (route.name === TabScreens.Home.toString()) {
-            return { headerShown: false };
+            return Object.assign({ headerShown: false }, defaultScreenOptions);
           }
-          return {};
+          return defaultScreenOptions;
         }}>
         <Stack.Screen name={TabScreens.Home} component={TabMenu} />
         <Stack.Screen name={StackScreens.DrawDetail} component={DrawDetail} />

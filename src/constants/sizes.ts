@@ -17,7 +17,7 @@ export const sizes = {
   get headerHeight() {
     return Platform.select({
       ios: 44 + statuHeight,
-      default: 56 + statuHeight,
+      default: 44 + statuHeight,
     });
   },
   windowWidth: Dimensions.get('window').width,

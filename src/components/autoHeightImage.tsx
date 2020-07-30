@@ -6,15 +6,11 @@ import {
   View,
   LayoutChangeEvent,
   ImageURISource,
-  ViewStyle,
-  StyleProp,
 } from 'react-native';
-import { observable, computed, runInAction } from 'mobx';
-import merge from 'lodash.merge';
-import { BaseComponent } from '.';
-import { FastImageProps } from 'react-native-fast-image';
+import { observable, runInAction, when } from 'mobx';
+import BaseComponent from './baseComponent';
 
-type ImageSize = { height: number; width: number };
+type Size = { height: number; width: number };
 const cache = new Map();
 const returnWithSaveCache = function <T>(key: string, value: T) {
   cache.set(key, value);
@@ -27,8 +23,8 @@ export const batchLoadImages = async function (
   await Promise.all(source.map((x) => loadImage(x)));
 };
 
-const loadImage = function (source: any): Promise<ImageSize> {
-  return new Promise<ImageSize>((resolve, reject) => {
+const loadImage = function (source: any): Promise<Size> {
+  return new Promise<Size>((resolve, reject) => {
     if (cache.has(source.uri)) {
       const size = cache.get(source.uri);
       resolve(size);
@@ -50,92 +46,92 @@ const loadImage = function (source: any): Promise<ImageSize> {
   });
 };
 
-type Props = {
-  height?: number;
-  width?: number;
-  imageStyle?: StyleProp<ViewStyle>;
-} & (ImageProps | FastImageProps);
+type OutputProps<P> = BaseProps & P;
+type BaseProps = {
+  imageSize?: Size;
+  onImageLayout?: (size: Size) => void;
+};
 
-export default <P extends FastImageProps | ImageProps>(
+const AutoHeightImageHOC = function <P extends object>(
   ImageComponent: React.ComponentType<P>,
-) => {
-  return observer(
-    class extends BaseComponent<Props> {
-      private size: ImageSize | undefined;
-
-      constructor(props: Props) {
+): React.ComponentType<OutputProps<P>> {
+  return (observer(
+    class extends BaseComponent<BaseProps & ImageProps> {
+      constructor(props: BaseProps & ImageProps) {
         super(props);
-        const { height, width } = this.props;
-        const loadImageTask =
-          height !== undefined && width !== undefined
-            ? Promise.resolve({ height, width } as ImageSize)
-            : loadImage(props.source);
+        const { imageSize } = this.props;
+        const loadImageTask = imageSize
+          ? Promise.resolve(imageSize)
+          : loadImage(props.source);
 
-        loadImageTask
-          .then((size: ImageSize) => {
-            this.size = size;
-            this.finishLoad();
-          })
-          .catch(() => {
-            this.finishLoad();
-          });
-      }
-      store = observable({
-        width: 0,
-        hasloaded: false,
-      });
-
-      overrodeProps = computed(() => {
-        if (this.store.hasloaded && this.size) {
-          let height;
-          let width = this.store.width;
-          const style: any = this.props?.style || {};
-          if (typeof style.width === 'undefined') {
-            style.width = '100%';
-          } else if (typeof style.width === 'number') {
-            width = style.width;
-          }
-          const scaling = width / this.size.width;
-          height = this.size.height * scaling;
-          return merge({}, this.props, {
-            style: { height, width: style.width },
-          });
-        }
-        return this.props;
-      });
-
-      finishLoad() {
-        runInAction(() => {
-          this.store.hasloaded = true;
-        });
-      }
-
-      onLayout = (event: LayoutChangeEvent) => {
-        if (event.nativeEvent.layout.width !== this.store.width) {
+        loadImageTask.then((size: Size) => {
           runInAction(() => {
-            this.store.width = event.nativeEvent.layout.width;
+            this.store.imageSize = size;
+          });
+        });
+
+        this.$reactionDisposers.push(
+          when(
+            () => !!this.store.imageSize && !!this.store.containerWidth,
+            () => {
+              if (this.store.imageSize) {
+                const scaling =
+                  this.store.containerWidth / this.store.imageSize.width;
+                const layoutSize = {
+                  width: this.store.containerWidth,
+                  height: scaling * this.store.imageSize.height,
+                };
+                this.store.layoutSize = layoutSize;
+                if (this.props.onImageLayout) {
+                  this.props.onImageLayout(layoutSize);
+                }
+              }
+            },
+          ),
+        );
+      }
+
+      store = observable({
+        containerWidth: 0,
+        imageSize: undefined as Size | undefined,
+        layoutSize: undefined as Size | undefined,
+      });
+
+      onLayout = ({
+        nativeEvent: {
+          layout: { width },
+        },
+      }: LayoutChangeEvent) => {
+        if (width !== this.store.containerWidth) {
+          runInAction(() => {
+            this.store.containerWidth = width;
           });
         }
       };
 
       render(): React.ReactNode {
-        const {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          height,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          width,
-          style,
-          ...rest
-        } = this.overrodeProps.get();
-        if (this.store.hasloaded) {
-          return (
-            <View onLayout={this.onLayout}>
-              <ImageComponent {...(rest as any)} style={style} />
-            </View>
-          );
-        }
-        return <></>;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { style, height, width, ...rest } = this.props;
+
+        return (
+          <View onLayout={this.onLayout}>
+            {this.store.layoutSize && (
+              <ImageComponent
+                {...(rest as any)}
+                style={[
+                  style,
+                  {
+                    height: this.store.layoutSize.height,
+                    width: this.store.layoutSize.width,
+                  },
+                ]}
+              />
+            )}
+          </View>
+        );
       }
     },
-  );
+  ) as unknown) as React.ComponentType<OutputProps<P>>; //TODO:Find out a generic difinition to...
 };
+
+export default AutoHeightImageHOC;
