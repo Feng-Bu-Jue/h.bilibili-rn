@@ -15,8 +15,6 @@ const LOLLIPOP = 21;
 type Props = ViewProps &
   Partial<TouchableNativeFeedbackProps> &
   Partial<TouchableOpacityProps> & {
-    borderless?: boolean;
-    pressColor: string;
     pressOpacity?: number;
     children?: React.ReactNode;
     style?: StyleProp<ViewStyle>;
@@ -31,17 +29,14 @@ export default class TouchableNative extends React.Component<Props> {
     const {
       style,
       pressOpacity,
-      pressColor,
-      borderless,
+
       children,
       ...rest
     } = this.props;
 
     if (Platform.OS === 'android' && Platform.Version >= LOLLIPOP) {
       return (
-        <TouchableNativeFeedback
-          {...rest}
-          background={TouchableNativeFeedback.Ripple(pressColor, borderless)}>
+        <TouchableNativeFeedback {...rest}>
           <View style={style}>{React.Children.only(children)}</View>
         </TouchableNativeFeedback>
       );

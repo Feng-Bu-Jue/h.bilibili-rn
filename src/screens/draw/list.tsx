@@ -7,16 +7,11 @@ import {
   BiliBiliProtocol,
   LinkDrawResultList,
 } from '~/bilibiliApi/typings';
-import { BaseComponent } from '~/components';
+import { BaseComponent, TouchableNative } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction } from 'mobx';
-import {
-  View,
-  Text,
-  TouchableNativeFeedback,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Text, TouchableNativeFeedback } from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
@@ -120,13 +115,13 @@ export default class DrawList extends BaseComponent<Props> {
                     borderRadius: 5,
                   },
                 ]}>
-                <TouchableWithoutFeedback
+                <TouchableNative
                   onPress={() => {
                     this.props.navigation.push(StackScreens.DrawDetail, {
                       docId: item.item.doc_id,
                     });
                   }}>
-                  <View>
+                  <View style={{ position: 'relative' }}>
                     <FastImage
                       style={{
                         height: size - 100,
@@ -174,7 +169,7 @@ export default class DrawList extends BaseComponent<Props> {
                       </View>
                     </View>
                   </View>
-                </TouchableWithoutFeedback>
+                </TouchableNative>
               </View>
             );
           }}

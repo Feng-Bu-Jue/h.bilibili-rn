@@ -48,6 +48,7 @@ const loadImage = function (source: any): Promise<Size> {
 
 type OutputProps<P> = BaseProps & P;
 type BaseProps = {
+  width?: number;
   imageSize?: Size;
   onImageLayout?: (size: Size) => void;
 };
@@ -59,7 +60,10 @@ const AutoHeightImageHOC = function <P extends object>(
     class extends BaseComponent<BaseProps & ImageProps> {
       constructor(props: BaseProps & ImageProps) {
         super(props);
-        const { imageSize } = this.props;
+        const { imageSize, width } = this.props;
+        if (width) {
+          this.store.containerWidth = width;
+        }
         const loadImageTask = imageSize
           ? Promise.resolve(imageSize)
           : loadImage(props.source);
@@ -102,7 +106,7 @@ const AutoHeightImageHOC = function <P extends object>(
           layout: { width },
         },
       }: LayoutChangeEvent) => {
-        if (width !== this.store.containerWidth) {
+        if (!this.store.containerWidth) {
           runInAction(() => {
             this.store.containerWidth = width;
           });
@@ -116,16 +120,22 @@ const AutoHeightImageHOC = function <P extends object>(
         return (
           <View onLayout={this.onLayout}>
             {this.store.layoutSize && (
-              <ImageComponent
-                {...(rest as any)}
-                style={[
-                  style,
-                  {
-                    height: this.store.layoutSize.height,
-                    width: this.store.layoutSize.width,
-                  },
-                ]}
-              />
+              <View
+                style={{
+                  height: this.store.layoutSize.height,
+                  width: this.store.layoutSize.width,
+                }}>
+                <ImageComponent
+                  {...(rest as any)}
+                  style={[
+                    style,
+                    {
+                      height: this.store.layoutSize.height,
+                      width: this.store.layoutSize.width,
+                    },
+                  ]}
+                />
+              </View>
             )}
           </View>
         );

@@ -4,44 +4,64 @@ import { View, Animated, Text } from 'react-native';
 import { DrawDetailProps } from '~/typings/navigation';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction, computed } from 'mobx';
-import { LinkDrawResult, Reply } from '~/bilibiliApi/typings';
+import { LinkDrawResult, Reply, ReplyResult } from '~/bilibiliApi/typings';
 import { BaseComponentWithAnimatedHeader } from '~/components/baseComponent';
-import { AutoHeightImageHOC, Panel } from '~/components';
+import {
+  AutoHeightImageHOC,
+  Panel,
+  TouchableNative,
+  LoadingView,
+} from '~/components';
 import FastImage from 'react-native-fast-image';
-import { colors, layout } from '~/constants';
-import { FlatList } from 'react-native-gesture-handler';
+import { colors, layout, sizes } from '~/constants';
+import {
+  FlatList,
+  TouchableWithoutFeedback,
+} from 'react-native-gesture-handler';
 import { ReplyApi } from '~/bilibiliApi/apis/replyApi';
 
 const AutoHeightImage = AutoHeightImageHOC(FastImage);
+
+const sortType = {
+  Latest: 0,
+  Hotest: 2,
+};
 
 @observer
 export default class DrawDetail extends BaseComponentWithAnimatedHeader<
   DrawDetailProps
 > {
-  private sortType = ['Hotlest', 'Latest'];
   replyPageNum = 1;
 
   @observable
   detail: LinkDrawResult | undefined;
   @observable
+  replyResult: ReplyResult | undefined;
+  @observable
   replies: Array<Reply> = [];
+  @observable
+  selectedSortCode = 2;
 
   constructor(props: DrawDetailProps) {
     super(props);
-    this.loadDetail(props.route.params.docId);
-    this.loadReply(props.route.params.docId);
+    this.loadDetail();
+    this.loadReply();
   }
 
   @computed
-  get pageVisible() {
-    return !!this.detail;
+  get extraData() {
+    return {
+      replyKey: this.replies.map((x) => x.rpid).join(''),
+    };
   }
 
   componentDidMount() {
     this.$useAnimatedHeadaer('Detail');
   }
 
-  async loadDetail(docId: number) {
+  async loadDetail() {
+    const { docId } = this.props.route.params;
+
     try {
       const response = await LinkDrawApi.getDocDetail({ doc_id: docId });
       runInAction(() => {
@@ -52,13 +72,22 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
     }
   }
 
-  async loadReply(docId: number) {
+  async loadReply(reload: boolean = false) {
+    const { docId } = this.props.route.params;
+    if (reload) {
+      runInAction(() => {
+        this.replies = [];
+        this.replyPageNum = 0;
+      });
+    }
     try {
       const response = await ReplyApi.getReplies({
         oid: docId,
         pn: this.replyPageNum,
+        sort: this.selectedSortCode,
       });
       runInAction(() => {
+        this.replyResult = response.data.data;
         this.replies = this.replies.concat(response.data.data.replies);
       });
     } catch (e) {
@@ -68,9 +97,14 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
 
   render() {
     if (this.detail) {
-      const listHeaderComponen = (
+      const listHeaderComponent = (
         <>
           <AutoHeightImage
+            width={sizes.screenWidth}
+            imageSize={{
+              height: this.detail.item.pictures[0].img_height,
+              width: this.detail.item.pictures[0].img_width,
+            }}
             source={{
               uri: this.detail.item.pictures[0].img_src,
             }}
@@ -82,7 +116,12 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                 flexDirection: 'row',
               }}>
               <FastImage
-                style={{ height: 40, width: 40, borderRadius: 20 }}
+                style={{
+                  height: 40,
+                  width: 40,
+                  borderRadius: 20,
+                  backgroundColor: colors.gray,
+                }}
                 source={{
                   uri: this.detail.user.head_url,
                 }}
@@ -109,9 +148,11 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                 </Text>
               </View>
             </View>
-            <Text style={{ marginTop: 15 }}>{this.detail.item.title}</Text>
+            <Text selectable style={{ marginTop: 15 }}>
+              {this.detail.item.title}
+            </Text>
             {!!this.detail.item.description && (
-              <Text>{this.detail.item.description}</Text>
+              <Text selectable>{this.detail.item.description}</Text>
             )}
           </Panel>
           <Panel style={[layout.margin(10, 0, 0, 0)]}>
@@ -123,20 +164,47 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                 ...layout.border([0, 0, 0.5, 0], colors.lightgray),
               }}>
               <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
-                {'Comment'}
+                {'Comment' +
+                  (this.replyResult?.page?.count
+                    ? `(${this.replyResult?.page.count})`
+                    : '')}
               </Text>
               <View style={{ flexDirection: 'row' }}>
-                {this.sortType.map((t, i) => {
+                {Object.entries(sortType).map(([name, code], i) => {
                   return (
-                    <Text
-                      key={i}
-                      style={[{ fontSize: 14 }, i ? { marginLeft: 15 } : {}]}>
-                      {t}
-                    </Text>
+                    <TouchableWithoutFeedback
+                      onPress={() => {
+                        runInAction(() => {
+                          this.selectedSortCode = code;
+                          this.loadReply(true);
+                        });
+                      }}>
+                      <Text
+                        key={i}
+                        style={[
+                          { fontSize: 14 },
+                          i ? { marginLeft: 15 } : {},
+                          this.selectedSortCode === code
+                            ? { fontWeight: 'bold' }
+                            : {},
+                        ]}>
+                        {name}
+                      </Text>
+                    </TouchableWithoutFeedback>
                   );
                 })}
               </View>
             </View>
+          </Panel>
+        </>
+      );
+
+      const listFooterComponent = (
+        <>
+          <Panel>
+            {!this.replies?.length && (
+              <LoadingView loading={true} style={{ height: 200 }} />
+            )}
           </Panel>
         </>
       );
@@ -161,46 +229,68 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                 { useNativeDriver: false },
               )(e);
             }}
-            ListHeaderComponent={listHeaderComponen}
+            ListHeaderComponent={listHeaderComponent}
+            ListFooterComponent={listFooterComponent}
             data={this.replies}
-            keyExtractor={(item) => {
-              return item.mid.toString();
+            keyExtractor={(item, i) => {
+              return item.rpid.toString() + '-' + i;
             }}
+            extraData={this.extraData}
             renderItem={({ item }) => {
               return (
-                <Panel
-                  style={{
-                    flexDirection: 'row',
-                    ...layout.padding(15),
-                    ...layout.border([0, 0, 0.5, 0], colors.lightgray),
-                  }}>
-                  <FastImage
-                    style={{ height: 40, width: 40, borderRadius: 20 }}
-                    source={{
-                      uri: item.member.avatar,
-                    }}
-                  />
-                  <View
+                <TouchableNative
+                  style={{ backgroundColor: '#000' }}
+                  onPress={() => {}}>
+                  <Panel
                     style={{
-                      marginLeft: 15,
-                      justifyContent: 'flex-start',
+                      flexDirection: 'row',
+                      ...layout.padding(15),
+                      ...layout.border([0, 0, 0.5, 0], colors.lightgray),
                     }}>
-                    <Text
+                    <FastImage
                       style={{
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        marginBottom: 5,
-                      }}>
-                      {item.member.uname}
-                    </Text>
-                    <Text
+                        height: 40,
+                        width: 40,
+                        borderRadius: 20,
+                        backgroundColor: colors.gray,
+                      }}
+                      source={{
+                        uri: item.member.avatar,
+                      }}
+                    />
+                    <View
                       style={{
-                        fontSize: 14,
+                        marginLeft: 15,
+                        justifyContent: 'flex-start',
+                        flex: 1,
                       }}>
-                      {item.content.message}
-                    </Text>
-                  </View>
-                </Panel>
+                      <Text
+                        selectable
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 'bold',
+                          marginBottom: 5,
+                        }}>
+                        {item.member.uname}
+                      </Text>
+                      <Text
+                        selectable
+                        style={{
+                          fontSize: 14,
+                        }}>
+                        {item.content.message}
+                      </Text>
+                      <Text
+                        style={{
+                          marginTop: 10,
+                          fontSize: 12,
+                          color: colors.gray,
+                        }}>
+                        {new Date(item.ctime * 1000).toLocaleString()}
+                      </Text>
+                    </View>
+                  </Panel>
+                </TouchableNative>
               );
             }}
           />

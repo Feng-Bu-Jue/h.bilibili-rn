@@ -46,7 +46,7 @@ export interface LinkDrawResultList {
   public items: LinkDrawResult[];
 }
 
-//* v1 */
+/* v1 */
 export interface LinkDrawResultV1 {
   public count: number;
   public ctime: number;
@@ -79,6 +79,7 @@ export interface Reply {
   public like: number;
   public mid: number;
   public oid: number;
+  rpid: number;
   public replies: Array<Reply>;
 }
 
