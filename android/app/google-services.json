@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "640207634266",
+    "firebase_url": "https://h-bilibili.firebaseio.com",
+    "project_id": "h-bilibili",
+    "storage_bucket": "h-bilibili.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:640207634266:android:1689770e68c0abaab8bd63",
+        "android_client_info": {
+          "package_name": "com.hbilibili"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "640207634266-otg5v20kgu1c6b1r8n3sj0jc9n11ttqc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-Gvw78UzqmgwIe0n6U8Si70l3tL86TFk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "640207634266-otg5v20kgu1c6b1r8n3sj0jc9n11ttqc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
