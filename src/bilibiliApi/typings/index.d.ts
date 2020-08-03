@@ -28,6 +28,15 @@ export interface LinkDrawItem {
   public upload_timestamp: number;
   public view_count: number;
   public pictures: Array<Picture>;
+  tags: Tag[];
+}
+
+export interface Tag {
+  category: string;
+  name: string;
+  tag: string;
+  text: string;
+  type: number;
 }
 
 export interface LinkDrawUesr {

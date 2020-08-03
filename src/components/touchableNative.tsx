@@ -37,7 +37,7 @@ export default class TouchableNative extends React.Component<Props> {
     if (Platform.OS === 'android' && Platform.Version >= LOLLIPOP) {
       return (
         <TouchableNativeFeedback {...rest}>
-          <View style={style}>{React.Children.only(children)}</View>
+          <View style={style}>{children}</View>
         </TouchableNativeFeedback>
       );
     } else {

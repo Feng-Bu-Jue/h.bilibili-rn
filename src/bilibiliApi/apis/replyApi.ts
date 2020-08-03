@@ -16,7 +16,7 @@ export class Reply extends BaseService {
     query: {
       oid: number;
       pn: number;
-      sort?: number;
+      sort: number;
       type?: number;
     },
   ): Promise<Response<BiliBiliProtocol<ReplyResult>>> {

@@ -9,8 +9,9 @@ export const colors = {
   white: '#FFFFFF',
   charcoal: 'rgb(70,70,70)',
   cinnabar: '#e54e26',
-  gray: '#DADADA',
-  lightgray: '#D3D3D3',
+  gray: '#777777',
+  lightgray: '#DADADA',
+  nobel: '#969696',
   shadow: '#999999',
   transparent: 'rgba(255, 255, 255, 0)',
 };

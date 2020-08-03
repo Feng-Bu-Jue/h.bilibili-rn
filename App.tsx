@@ -5,15 +5,8 @@ import { Splash } from '~/components/splash';
 import { observer } from 'mobx-react';
 import { appStore } from '~/stores/appStore';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import {
-  StatusBar,
-  Platform,
-  TouchableOpacity,
-  Text,
-  View,
-} from 'react-native';
+import { StatusBar, Platform } from 'react-native';
 import { colors } from '~/constants/colors';
-import Popover from 'react-native-popover-view';
 
 enableScreens();
 
@@ -35,7 +28,7 @@ class App extends React.Component<AppProps> {
   }
 
   async ready() {
-    await sleep(10000);
+    await sleep(1000);
     appStore.ready();
   }
 
@@ -49,20 +42,7 @@ class App extends React.Component<AppProps> {
             backgroundColor={colors.transparent}
           />
         )}
-        {appStore.loading ? (
-          <Popover
-            from={
-              <View style={{ marginTop: 100 }}>
-                <TouchableOpacity>
-                  <Text>Press here to open popover!</Text>
-                </TouchableOpacity>
-              </View>
-            }>
-            <Text>This is the contents of the popover</Text>
-          </Popover>
-        ) : (
-          <Router />
-        )}
+        {appStore.loading ? <Splash /> : <Router />}
       </SafeAreaProvider>
     );
   }

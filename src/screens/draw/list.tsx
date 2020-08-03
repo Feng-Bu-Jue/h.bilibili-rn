@@ -1,17 +1,23 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { observer } from 'mobx-react';
-import FastImage from 'react-native-fast-image';
 import {
   LinkDrawResult,
   BiliBiliProtocol,
   LinkDrawResultList,
+  ListType,
 } from '~/bilibiliApi/typings';
 import { BaseComponent, TouchableNative } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
-import { observable, runInAction } from 'mobx';
-import { View, Text, TouchableNativeFeedback } from 'react-native';
+import { observable, runInAction, action } from 'mobx';
+import {
+  View,
+  Text,
+  TouchableNativeFeedback,
+  Image,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
@@ -24,13 +30,15 @@ type Props = {
 
 @observer
 export default class DrawList extends BaseComponent<Props> {
-  pageNum = 1;
+  pageNum = 0;
   pageSize = 20;
   columnCount = 2;
   columnGap = 8;
 
   waterfallRef: Waterfall | null = null;
 
+  @observable
+  listType: ListType = 'hot';
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
 
@@ -39,25 +47,31 @@ export default class DrawList extends BaseComponent<Props> {
   }
 
   async fetchDrawItems(columnWidth: number, reload: boolean = false) {
+    if (reload) {
+      runInAction(() => {
+        this.drawItems = [];
+        this.pageNum = 0;
+      });
+    }
     try {
       let response: Response<BiliBiliProtocol<LinkDrawResultList>>;
       if (this.props.pageType === 'draw') {
         response = await LinkDrawApi.getDocs({
           page_num: this.pageNum,
           page_size: this.pageSize,
-          type: 'hot',
+          type: this.listType,
           category: 'illustration',
         });
       } else {
         response = await LinkDrawApi.getPhotos({
           page_num: this.pageNum,
           page_size: this.pageSize,
-          type: 'hot',
-          category: 'all',
+          type: this.listType,
+          category: 'cos',
         });
       }
+      this.pageNum++;
       if (this.pageSize * this.pageNum < response?.data?.data.total_count) {
-        this.pageNum++;
         runInAction(() => {
           const mappingResult = response.data.data.items.map((item) => {
             const ratio =
@@ -68,11 +82,7 @@ export default class DrawList extends BaseComponent<Props> {
               item: item,
             };
           });
-          if (reload) {
-            this.drawItems = mappingResult;
-          } else {
-            this.drawItems = this.drawItems.concat(mappingResult);
-          }
+          this.drawItems = this.drawItems.concat(mappingResult);
         });
       }
     } catch (e) {
@@ -80,7 +90,39 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
+  renderCheckBox<T>(value: T, checked: boolean, onCheck: (value: T) => void) {
+    return (
+      <TouchableWithoutFeedback onPress={() => onCheck(value)}>
+        <Text style={{ ...layout.padding(10), borderRadius: 10 }}>{value}</Text>
+      </TouchableWithoutFeedback>
+    );
+  }
+
+  @action.bound
+  changeListType(value: ListType) {
+    if (this.waterfallRef) {
+      this.listType = value;
+      this.waterfallRef.reset();
+      this.fetchDrawItems(this.waterfallRef.getColumnWidth(), true);
+    }
+  }
+
   render(): React.ReactNode {
+    const headerComponent = (
+      <View style={{ flexDirection: 'row' }}>
+        {this.renderCheckBox(
+          'hot',
+          this.listType === 'hot',
+          this.changeListType,
+        )}
+        {this.renderCheckBox(
+          'new',
+          this.listType === 'new',
+          this.changeListType,
+        )}
+      </View>
+    );
+
     return (
       <View
         style={{
@@ -90,12 +132,13 @@ export default class DrawList extends BaseComponent<Props> {
         <Waterfall
           ref={(r) => (this.waterfallRef = r)}
           onInitData={(columnWidth) => this.fetchDrawItems(columnWidth)}
-          columnCount={2}
+          columnNum={2}
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
           bufferAmount={10}
           containerStyle={layout.padding(0, 10)}
           bounces={true}
+          HeaderComponent={headerComponent}
           renderItem={(
             {
               item,
@@ -121,52 +164,50 @@ export default class DrawList extends BaseComponent<Props> {
                       docId: item.item.doc_id,
                     });
                   }}>
-                  <View style={{ position: 'relative' }}>
-                    <FastImage
+                  <View style={{ height: size - 100, width: columnWidth }}>
+                    <Image
                       style={{
                         height: size - 100,
                         width: columnWidth,
-                        borderTopLeftRadius: 5,
-                        borderTopRightRadius: 5,
                       }}
+                      borderTopLeftRadius={5}
+                      borderTopRightRadius={5}
                       source={{
                         uri:
                           item.item.pictures[0].img_src + '@512w_384h_1e.webp',
-                        priority: FastImage.priority.high,
                       }}
-                      resizeMode={FastImage.resizeMode.contain}
+                      resizeMode={'contain'}
                     />
-                    <View style={{ height: 90, ...layout.padding(8) }}>
+                  </View>
+                  <View style={{ height: 90, ...layout.padding(8) }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ fontSize: 14, color: colors.black }}>
+                      {item.item.title}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 5,
+                      }}>
+                      <Image
+                        style={{
+                          height: 24,
+                          width: 24,
+                          marginRight: 10,
+                          borderRadius: 24,
+                        }}
+                        source={{
+                          uri: `${item.user.head_url}@${24}w_${24}h_1e.webp`,
+                        }}
+                        resizeMode={'contain'}
+                      />
                       <Text
                         numberOfLines={1}
-                        style={{ fontSize: 14, color: colors.black }}>
-                        {item.item.title}
+                        style={{ fontSize: 14, color: colors.charcoal }}>
+                        {item.user.name}
                       </Text>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          padding: 5,
-                        }}>
-                        <FastImage
-                          style={{
-                            height: 24,
-                            width: 24,
-                            marginRight: 10,
-                            borderRadius: 24,
-                          }}
-                          source={{
-                            uri: `${item.user.head_url}@${24}w_${24}h_1e.webp`,
-                            priority: FastImage.priority.high,
-                          }}
-                          resizeMode={FastImage.resizeMode.contain}
-                        />
-                        <Text
-                          numberOfLines={1}
-                          style={{ fontSize: 14, color: colors.charcoal }}>
-                          {item.user.name}
-                        </Text>
-                      </View>
                     </View>
                   </View>
                 </TouchableNative>
