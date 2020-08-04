@@ -6,18 +6,13 @@ import { BiliBiliProtocol, ReplyResult, AddReplyResult } from '../typings';
 @ApiDescriptor('api')
 export class Reply extends BaseService {
   @GET('x/v2/reply')
-  @Queries({
-    type: 11,
-    sort: 0,
-    jsonp: 'jsonp',
-  })
   async getReplies(
     @QueryMapW()
     query: {
       oid: number;
       pn: number;
       sort: number;
-      type?: number;
+      type: number;
     },
   ): Promise<Response<BiliBiliProtocol<ReplyResult>>> {
     return <Response<BiliBiliProtocol<ReplyResult>>>{};

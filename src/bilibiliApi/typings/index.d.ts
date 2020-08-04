@@ -1,4 +1,4 @@
-export type DrawCategory = 'all' | 'illustration' | 'comic' | 'other';
+export type DrawCategory = 'all' | 'illustration' | 'comic' | 'draw';
 export type PhotoCategory = 'all' | 'sifu' | 'cos';
 export type ListType = 'hot' | 'new';
 

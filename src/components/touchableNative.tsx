@@ -26,13 +26,7 @@ export default class TouchableNative extends React.Component<Props> {
   };
 
   render() {
-    const {
-      style,
-      pressOpacity,
-
-      children,
-      ...rest
-    } = this.props;
+    const { style, pressOpacity, children, ...rest } = this.props;
 
     if (Platform.OS === 'android' && Platform.Version >= LOLLIPOP) {
       return (

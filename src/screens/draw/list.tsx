@@ -6,23 +6,21 @@ import {
   BiliBiliProtocol,
   LinkDrawResultList,
   ListType,
+  DrawCategory,
+  PhotoCategory,
 } from '~/bilibiliApi/typings';
 import { BaseComponent, TouchableNative } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
-import { observable, runInAction, action } from 'mobx';
-import {
-  View,
-  Text,
-  TouchableNativeFeedback,
-  Image,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { observable, runInAction, computed } from 'mobx';
+import { View, Text, TouchableNativeFeedback, Image } from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
 import { DrawListProps } from '~/typings/navigation';
 import { StackScreens } from '~/typings/screens';
+import { ScrollView } from 'react-native-gesture-handler';
+import IconBilibili from '~/assets/iconfont/IconBilibili';
 
 type Props = {
   pageType: 'draw' | 'photo';
@@ -38,18 +36,37 @@ export default class DrawList extends BaseComponent<Props> {
   waterfallRef: Waterfall | null = null;
 
   @observable
-  listType: ListType = 'hot';
+  selectedListType: ListType = 'hot';
+  @observable
+  selectedCategory: DrawCategory | PhotoCategory;
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
 
   constructor(props: Props) {
     super(props);
+    if (props.pageType === 'draw') {
+      this.selectedCategory = 'illustration';
+    } else {
+      this.selectedCategory = 'all';
+    }
+  }
+
+  get listType(): Array<ListType> {
+    return ['hot', 'new'];
+  }
+
+  @computed
+  get categories(): Array<DrawCategory | PhotoCategory> {
+    if (this.props.pageType === 'draw') {
+      return ['all', 'illustration', 'comic', 'draw'];
+    } else {
+      return ['all', 'sifu', 'cos'];
+    }
   }
 
   async fetchDrawItems(columnWidth: number, reload: boolean = false) {
     if (reload) {
       runInAction(() => {
-        this.drawItems = [];
         this.pageNum = 0;
       });
     }
@@ -59,15 +76,22 @@ export default class DrawList extends BaseComponent<Props> {
         response = await LinkDrawApi.getDocs({
           page_num: this.pageNum,
           page_size: this.pageSize,
-          type: this.listType,
-          category: 'illustration',
+          type: this.selectedListType,
+          category: this.selectedCategory as any,
         });
       } else {
         response = await LinkDrawApi.getPhotos({
           page_num: this.pageNum,
           page_size: this.pageSize,
-          type: this.listType,
-          category: 'cos',
+          type: this.selectedListType,
+          category: this.selectedCategory as any,
+        });
+      }
+      // reset after api called, make sure the blank screen time of existence as an instant
+      if (reload) {
+        runInAction(() => {
+          this.drawItems = [];
+          this.waterfallRef!.reset();
         });
       }
       this.pageNum++;
@@ -90,36 +114,92 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
-  renderCheckBox<T>(value: T, checked: boolean, onCheck: (value: T) => void) {
+  renderCheckBox<T>(
+    value: T,
+    index: number,
+    key: string,
+    checked: boolean,
+    onPress: (value: T) => void,
+  ) {
     return (
-      <TouchableWithoutFeedback onPress={() => onCheck(value)}>
-        <Text style={{ ...layout.padding(10), borderRadius: 10 }}>{value}</Text>
-      </TouchableWithoutFeedback>
+      <View
+        key={key}
+        style={[
+          index ? { marginLeft: 10 } : {},
+          {
+            borderRadius: 15,
+            overflow: 'hidden',
+            ...layout.border([1], colors.lightgray),
+            ...(checked ? { backgroundColor: colors.pink } : {}),
+          },
+        ]}>
+        <TouchableNative
+          style={{
+            minWidth: 60,
+            alignItems: 'center',
+            ...layout.padding(5, 10),
+          }}
+          onPress={() => onPress(value)}>
+          <Text
+            style={{
+              ...(checked ? { color: colors.white } : { color: colors.black }),
+            }}>
+            {value}
+          </Text>
+        </TouchableNative>
+      </View>
     );
   }
 
-  @action.bound
-  changeListType(value: ListType) {
+  reloadItems() {
     if (this.waterfallRef) {
-      this.listType = value;
-      this.waterfallRef.reset();
       this.fetchDrawItems(this.waterfallRef.getColumnWidth(), true);
     }
   }
 
   render(): React.ReactNode {
     const headerComponent = (
-      <View style={{ flexDirection: 'row' }}>
-        {this.renderCheckBox(
-          'hot',
-          this.listType === 'hot',
-          this.changeListType,
-        )}
-        {this.renderCheckBox(
-          'new',
-          this.listType === 'new',
-          this.changeListType,
-        )}
+      <View style={{ ...layout.padding(10, 0) }}>
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          style={{ flexDirection: 'row', marginTop: 10 }}>
+          {this.listType.map((type, i) => {
+            const checked = this.selectedListType === type;
+            return this.renderCheckBox(
+              type,
+              i,
+              `type-${type}`,
+              checked,
+              (value) => {
+                runInAction(() => {
+                  this.selectedListType = value;
+                  this.reloadItems();
+                });
+              },
+            );
+          })}
+        </ScrollView>
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          style={{ flexDirection: 'row', marginTop: 10 }}>
+          {this.categories.map((category, i) => {
+            const checked = this.selectedCategory === category;
+            return this.renderCheckBox(
+              category,
+              i,
+              `category-${category}`,
+              checked,
+              (value) => {
+                runInAction(() => {
+                  this.selectedCategory = value;
+                  this.reloadItems();
+                });
+              },
+            );
+          })}
+        </ScrollView>
       </View>
     );
 
@@ -196,10 +276,10 @@ export default class DrawList extends BaseComponent<Props> {
                           height: 24,
                           width: 24,
                           marginRight: 10,
-                          borderRadius: 24,
                         }}
+                        borderRadius={12}
                         source={{
-                          uri: `${item.user.head_url}@${24}w_${24}h_1e.webp`,
+                          uri: `${item.user.head_url}@${64}w_${64}h_1e.webp`,
                         }}
                         resizeMode={'contain'}
                       />
@@ -230,7 +310,7 @@ export default class DrawList extends BaseComponent<Props> {
             borderRadius: 20,
             overflow: 'hidden',
           }}>
-          <TouchableNativeFeedback
+          <TouchableNative
             onPress={() => {
               this.waterfallRef?.scrollTo({
                 y: 0,
@@ -247,7 +327,7 @@ export default class DrawList extends BaseComponent<Props> {
             <View>
               <IconArrowUp size={30} />
             </View>
-          </TouchableNativeFeedback>
+          </TouchableNative>
         </View>
       </View>
     );

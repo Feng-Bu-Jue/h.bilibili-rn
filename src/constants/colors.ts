@@ -3,6 +3,7 @@ export const colors = {
   smoky: '#65587f',
   blush: '#e85f99',
   puerto: '#50bda1',
+  pelorous: '#2084B5',
   apricot: '#f18867',
   black: '#111111',
   black70: 'rgba(255,255,255,0.7)',

@@ -11,6 +11,7 @@ import { colors, layout, sizes } from '~/constants';
 import {
   FlatList,
   TouchableWithoutFeedback,
+  ScrollView,
 } from 'react-native-gesture-handler';
 import { ReplyApi } from '~/bilibiliApi/apis/replyApi';
 import ImageView from 'react-native-image-viewing';
@@ -28,7 +29,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
   DrawDetailProps
 > {
   @observable
-  replyPageNum = 0;
+  replyPageNum = 1;
   @observable
   detail: LinkDrawResult | undefined;
   @observable
@@ -92,23 +93,23 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
   }
 
   async loadReply(reload: boolean = false) {
-    if (!this.noMoreOfReply || reload) {
+    if ((!this.noMoreOfReply || reload) && !this.replyLoading) {
       runInAction(() => {
         this.replyLoading = true;
       });
-      await this._loadReplyWithoutLoadingIndicator(reload);
+      await this._loadReplyWithoutLoading(reload);
       runInAction(() => {
         this.replyLoading = false;
       });
     }
   }
 
-  private async _loadReplyWithoutLoadingIndicator(reload: boolean = false) {
+  private async _loadReplyWithoutLoading(reload: boolean = false) {
     const { docId } = this.props.route.params;
     if (reload) {
       runInAction(() => {
         this.replies = [];
-        this.replyPageNum = 0;
+        this.replyPageNum = 1;
       });
     }
     try {
@@ -116,6 +117,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
         oid: docId,
         pn: this.replyPageNum,
         sort: this.selectedSortCode,
+        type: 11,
       });
       runInAction(() => {
         this.replyPageNum++;
@@ -223,24 +225,28 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                 ...layout.border([1, 0, 0, 0], colors.lightgray),
                 flexDirection: 'row',
               }}>
-              {this.detail.item?.tags.map((x, i) => {
-                return (
-                  <Text
-                    key={x.tag}
-                    style={{
-                      ...layout.padding(5),
-                      ...(i ? { marginLeft: 10 } : {}),
-                      flexWrap: 'wrap',
-                      flex: 0,
-                      alignItems: 'center',
-                      borderRadius: 5,
-                      color: colors.gray,
-                      backgroundColor: colors.lightgray,
-                    }}>
-                    {x.text}
-                  </Text>
-                );
-              })}
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}>
+                {this.detail.item?.tags.map((x, i) => {
+                  return (
+                    <Text
+                      key={`${x.tag}-${i}`}
+                      style={{
+                        ...layout.padding(5),
+                        ...(i ? { marginLeft: 10 } : {}),
+                        flexWrap: 'wrap',
+                        flex: 0,
+                        alignItems: 'center',
+                        borderRadius: 5,
+                        color: colors.gray,
+                        backgroundColor: colors.lightgray,
+                      }}>
+                      {x.text}
+                    </Text>
+                  );
+                })}
+              </ScrollView>
             </Panel>
           )}
           <Panel style={[layout.margin(10, 0, 0, 0)]}>
@@ -417,7 +423,12 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                                 console.log('3132');
                               }}>
                               <View>
-                                <Text>{r.content.message}</Text>
+                                <Text>
+                                  <Text style={{ color: colors.pelorous }}>
+                                    {r.member.uname}
+                                  </Text>
+                                  {': ' + r.content.message}
+                                </Text>
                               </View>
                             </TouchableNative>
                           );
