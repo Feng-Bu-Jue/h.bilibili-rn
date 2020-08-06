@@ -11,16 +11,15 @@ import {
 } from '~/bilibiliApi/typings';
 import { BaseComponent, TouchableNative } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
-import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction, computed } from 'mobx';
-import { View, Text, TouchableNativeFeedback, Image } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
 import { DrawListProps } from '~/typings/navigation';
 import { StackScreens } from '~/typings/screens';
 import { ScrollView } from 'react-native-gesture-handler';
-import IconBilibili from '~/assets/iconfont/IconBilibili';
+import { LinkDrawApi } from '~/bilibiliApi';
 
 type Props = {
   pageType: 'draw' | 'photo';
@@ -114,6 +113,12 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
+  reloadDrawItems() {
+    if (this.waterfallRef) {
+      this.fetchDrawItems(this.waterfallRef.getColumnWidth(), true);
+    }
+  }
+
   renderCheckBox<T>(
     value: T,
     index: number,
@@ -151,12 +156,6 @@ export default class DrawList extends BaseComponent<Props> {
     );
   }
 
-  reloadItems() {
-    if (this.waterfallRef) {
-      this.fetchDrawItems(this.waterfallRef.getColumnWidth(), true);
-    }
-  }
-
   render(): React.ReactNode {
     const headerComponent = (
       <View style={{ ...layout.padding(10, 0) }}>
@@ -174,7 +173,7 @@ export default class DrawList extends BaseComponent<Props> {
               (value) => {
                 runInAction(() => {
                   this.selectedListType = value;
-                  this.reloadItems();
+                  this.reloadDrawItems();
                 });
               },
             );
@@ -194,7 +193,7 @@ export default class DrawList extends BaseComponent<Props> {
               (value) => {
                 runInAction(() => {
                   this.selectedCategory = value;
-                  this.reloadItems();
+                  this.reloadDrawItems();
                 });
               },
             );

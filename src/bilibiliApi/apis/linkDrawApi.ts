@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseService, GET, Response } from 'ts-retrofit';
-import { ApiDescriptor, buildApi, QueryMapW } from '..';
 import {
   BiliBiliProtocol,
   LinkDrawResultList,
@@ -9,9 +8,10 @@ import {
   PhotoCategory,
   LinkDrawResult,
 } from '../typings';
+import { QueryMapW, ApiDescriptor } from '../extensions';
 
 @ApiDescriptor('apivc')
-export class LinkDraw extends BaseService {
+export class LinkDrawService extends BaseService {
   @GET('link_draw/v2/doc/list')
   async getDocs(
     @QueryMapW()
@@ -48,5 +48,3 @@ export class LinkDraw extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResult>>>{};
   }
 }
-
-export const LinkDrawApi = buildApi(LinkDraw);

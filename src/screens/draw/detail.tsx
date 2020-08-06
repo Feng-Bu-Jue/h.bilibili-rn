@@ -2,7 +2,6 @@ import React from 'react';
 import { observer } from 'mobx-react';
 import { View, Animated, Text, ActivityIndicator, Image } from 'react-native';
 import { DrawDetailProps } from '~/typings/navigation';
-import { LinkDrawApi } from '~/bilibiliApi/apis/linkDrawApi';
 import { observable, runInAction, computed } from 'mobx';
 import { LinkDrawResult, Reply, ReplyResult } from '~/bilibiliApi/typings';
 import { BaseComponentWithAnimatedHeader } from '~/components/baseComponent';
@@ -13,9 +12,9 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
 } from 'react-native-gesture-handler';
-import { ReplyApi } from '~/bilibiliApi/apis/replyApi';
 import ImageView from 'react-native-image-viewing';
 import IconMultiple from '~/assets/iconfont/IconMultiple';
+import { LinkDrawApi, ReplyApi } from '~/bilibiliApi';
 
 const AutoHeightImage = AutoHeightImageHOC(Image);
 
