@@ -220,7 +220,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
           {!!this.detail.item?.tags?.length && (
             <Panel
               style={{
-                ...layout.padding(15),
+                ...layout.padding(15, 0),
                 ...layout.border([1, 0, 0, 0], colors.lightgray),
                 flexDirection: 'row',
               }}>
@@ -233,13 +233,14 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                       key={`${x.tag}-${i}`}
                       style={{
                         ...layout.padding(5),
-                        ...(i ? { marginLeft: 10 } : {}),
+                        ...layout.margin(0, 10, 0, 0),
+                        ...(i === 0 ? { marginLeft: 10 } : {}),
                         flexWrap: 'wrap',
                         flex: 0,
                         alignItems: 'center',
                         borderRadius: 5,
                         color: colors.gray,
-                        backgroundColor: colors.lightgray,
+                        backgroundColor: colors.whitesmoke,
                       }}>
                       {x.text}
                     </Text>
@@ -402,7 +403,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                       selectable
                       style={{
                         fontSize: 14,
-                        marginTop: 5,
+                        marginTop: 15,
                       }}>
                       {item.content.message}
                     </Text>
@@ -412,7 +413,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                           marginTop: 10,
                           ...layout.padding(10),
                           borderRadius: 3,
-                          backgroundColor: '#F4F4F4',
+                          backgroundColor: colors.whitesmoke,
                         }}>
                         {item.replies.map((r) => {
                           return (

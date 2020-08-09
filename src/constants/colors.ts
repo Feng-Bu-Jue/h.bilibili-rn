@@ -7,6 +7,7 @@ export const colors = {
   apricot: '#f18867',
   black: '#111111',
   black70: 'rgba(255,255,255,0.7)',
+  whitesmoke: '#F4F4F4',
   white: '#FFFFFF',
   charcoal: 'rgb(70,70,70)',
   cinnabar: '#e54e26',

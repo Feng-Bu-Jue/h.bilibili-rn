@@ -235,6 +235,7 @@ export default class DrawList extends BaseComponent<Props> {
                   {
                     backgroundColor: colors.white,
                     borderRadius: 5,
+                    overflow: 'hidden',
                   },
                 ]}>
                 <TouchableNative
@@ -249,8 +250,6 @@ export default class DrawList extends BaseComponent<Props> {
                         height: size - 100,
                         width: columnWidth,
                       }}
-                      borderTopLeftRadius={5}
-                      borderTopRightRadius={5}
                       source={{
                         uri:
                           item.item.pictures[0].img_src + '@512w_384h_1e.webp',

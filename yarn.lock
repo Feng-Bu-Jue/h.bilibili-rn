@@ -6813,10 +6813,14 @@ tr46@^1.0.1:
   dependencies:
     punycode "^2.1.0"
 
-ts-retrofit@^1.7.0:
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/ts-retrofit/-/ts-retrofit-1.9.0.tgz#998e7173cde82fbb7de2e19e9549a2e2dabb24a2"
-  integrity sha512-sjWxM8BHfr0KB5lUEPfHIww4PsejIlAhkf+CuoqGHoYD3jVcjy5R1uZ0gyYpDcYVQt8zhWH/Wlwq4v7jH6XEYA==
+ts-md5@^1.2.7:
+  version "1.2.7"
+  resolved "https://registry.npm.taobao.org/ts-md5/download/ts-md5-1.2.7.tgz#b76471fc2fd38f0502441f6c3b9494ed04537401"
+  integrity sha1-t2Rx/C/TjwUCRB9sO5SU7QRTdAE=
+
+"ts-retrofit@git+ssh://git@github.com:Feng-Bu-Jue/ts-retrofit.git":
+  version "1.5.1"
+  resolved "git+ssh://git@github.com:Feng-Bu-Jue/ts-retrofit.git#d8709f42eb9735b0dc4596a886b03289bfe38ce9"
   dependencies:
     axios "^0.19.0"
     form-data "^2.5.1"

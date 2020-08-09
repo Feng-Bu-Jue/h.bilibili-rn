@@ -1,10 +1,11 @@
 import { BaseService, QueryMap, ServiceBuilder } from 'ts-retrofit';
 
-const ApiEndponits = {
+export const ApiEndponits = {
   apivc: 'https://api.vc.bilibili.com/',
   api: 'https://api.bilibili.com/',
   kaaassNet: 'https://api.kaaass.net/',
   apiLive: 'https://api.live.bilibili.com/',
+  passport: 'https://passport.bilibili.com/',
 };
 
 export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
@@ -25,8 +26,11 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
   const endpoint = (ApiEndponits as any)[
     service.prototype.__meta__.ApiDescriptor
   ];
-  return new ServiceBuilder()
-    .setEndpoint(endpoint)
+  const builder = new ServiceBuilder();
+  if (endpoint) {
+    builder.setEndpoint(endpoint);
+  }
+  return builder
     .setStandalone(true)
     .setRequestInterceptors((config) => {
       // config.onDownloadProgress;
