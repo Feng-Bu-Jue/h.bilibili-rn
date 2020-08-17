@@ -21,10 +21,6 @@ type Props = ViewProps &
   };
 
 export default class TouchableNative extends React.Component<Props> {
-  static defaultProps = {
-    pressColor: 'rgba(255, 255, 255, .4)',
-  };
-
   render() {
     const { style, pressOpacity, children, ...rest } = this.props;
 
