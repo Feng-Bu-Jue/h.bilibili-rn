@@ -9,7 +9,7 @@ import {
   DrawCategory,
   PhotoCategory,
 } from '~/bilibiliApi/typings';
-import { BaseComponent, TouchableNative } from '~/components';
+import { BaseComponent, TouchableNative, DropdownMenu } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { observable, runInAction, computed } from 'mobx';
 import { View, Text, Image, StyleSheet } from 'react-native';
@@ -18,7 +18,6 @@ import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
 import { DrawListProps } from '~/typings/navigation';
 import { StackScreens } from '~/typings/screens';
-import { ScrollView } from 'react-native-gesture-handler';
 import { LinkDrawApi } from '~/bilibiliApi';
 import { TabView } from 'react-native-tab-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -135,6 +134,8 @@ export default class DrawList extends BaseComponent<Props> {
   selectedCategory: DrawCategory | PhotoCategory;
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
+  @observable
+  menuActiveIndex = 0;
 
   constructor(props: Props) {
     super(props);
@@ -253,47 +254,26 @@ export default class DrawList extends BaseComponent<Props> {
 
   render(): React.ReactNode {
     const headerComponent = (
-      <View style={{ ...layout.padding(10, 0) }}>
-        <ScrollView
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          style={{ flexDirection: 'row', marginTop: 10 }}>
-          {this.listType.map((type, i) => {
-            const checked = this.selectedListType === type;
-            return this.renderCheckBox(
-              type,
-              i,
-              `type-${type}`,
-              checked,
-              (value) => {
-                runInAction(() => {
-                  this.selectedListType = value;
-                  this.reloadDrawItems();
-                });
-              },
-            );
-          })}
-        </ScrollView>
-        <ScrollView
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          style={{ flexDirection: 'row', marginTop: 10 }}>
-          {this.categories.map((category, i) => {
-            const checked = this.selectedCategory === category;
-            return this.renderCheckBox(
-              category,
-              i,
-              `category-${category}`,
-              checked,
-              (value) => {
-                runInAction(() => {
-                  this.selectedCategory = value;
-                  this.reloadDrawItems();
-                });
-              },
-            );
-          })}
-        </ScrollView>
+      <View>
+        <DropdownMenu.Box
+          activeIndex={this.menuActiveIndex}
+          onActiveIndexChange={(index) => {
+            this.menuActiveIndex = index;
+          }}>
+          <DropdownMenu.Option
+            value={1}
+            options={[
+              { text: '全部类型', value: 1 },
+              { text: '插画', value: 2 },
+              { text: '漫画', value: 3 },
+              { text: '其他', value: 4 },
+            ]}
+          />
+          <DropdownMenu.Option
+            value={1}
+            options={[{ text: 'test', value: 1 }]}
+          />
+        </DropdownMenu.Box>
       </View>
     );
 
