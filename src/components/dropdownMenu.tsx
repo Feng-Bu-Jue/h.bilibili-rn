@@ -7,17 +7,20 @@ import {
   LayoutRectangle,
   findNodeHandle,
 } from 'react-native';
-import { colors, layout } from '~/constants';
-import { action, reaction, observable, computed } from 'mobx';
+import { colors, layout, sizes } from '~/constants';
+import { action, reaction, computed, observable, runInAction } from 'mobx';
 import TouchableNative from './touchableNative';
-import { BaseComponent } from '.';
+import { BaseComponent, Portal } from '.';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
-type Option<T> = {
+export type Option<T> = {
   text: string;
   value: T;
 };
 
-const DropdownMenuContext = React.createContext({});
+const DropdownMenuContext = React.createContext<{
+  onActiveIndexChange: (index: number) => void;
+}>({} as any);
 
 @observer
 class DropdownMenu<T> extends BaseComponent<{
@@ -27,12 +30,14 @@ class DropdownMenu<T> extends BaseComponent<{
 }> {
   static defaultProps = { activeIndex: -1 };
 
-  menulayout?: LayoutRectangle;
   private menu?: View | null = null;
+
+  @observable
+  menulayout?: LayoutRectangle;
 
   @computed
   get rendered() {
-    return this.props.activeIndex >= 0 && false;
+    return this.props.activeIndex >= 0 && !!this.menulayout;
   }
 
   componentDidMount() {
@@ -71,21 +76,26 @@ class DropdownMenu<T> extends BaseComponent<{
 
   async show() {
     const menuLayout = await this.measureMenuLayout();
-    console.log(menuLayout);
+    runInAction(() => {
+      this.menulayout = menuLayout;
+    });
   }
 
   hide() {}
 
   @action.bound
   onMenuItemPress(index: number) {
-    this.props.onActiveIndexChange(index);
+    this._onActiveIndexChange(index);
   }
+
+  _onActiveIndexChange = (index: number) => {
+    this.props.onActiveIndexChange(index);
+  };
 
   render() {
     const { children, activeIndex } = this.props;
-
     return (
-      <DropdownMenuContext.Provider value={{}}>
+      <>
         <View
           ref={(ref) => {
             this.menu = ref;
@@ -108,11 +118,25 @@ class DropdownMenu<T> extends BaseComponent<{
           )}
         </View>
         {this.rendered && (
-          <View style={[styles.optionBox]}>
-            {React.Children.toArray(children)[activeIndex]}
-          </View>
+          <Portal>
+            <View
+              style={{
+                zIndex: sizes.zIndexN,
+                transform: [{ translateY: this.menulayout!.height }],
+              }}>
+              <DropdownMenuContext.Provider
+                value={{ onActiveIndexChange: this._onActiveIndexChange }}>
+                {React.Children.toArray(children)[activeIndex]}
+              </DropdownMenuContext.Provider>
+            </View>
+            <TouchableWithoutFeedback
+              // eslint-disable-next-line react-native/no-inline-styles
+              containerStyle={{ flex: 1, backgroundColor: colors.black40 }}
+              onPress={() => this.onMenuItemPress(-1)}
+            />
+          </Portal>
         )}
-      </DropdownMenuContext.Provider>
+      </>
     );
   }
 }
@@ -121,42 +145,53 @@ class DropdownMenu<T> extends BaseComponent<{
 class DropdownMenuOption<T> extends React.Component<{
   value: T;
   options: Option<T>[];
+  onValueChange: (value: T) => void;
 }> {
   render() {
     const { value, options } = this.props;
     return (
-      <View
-        // eslint-disable-next-line react-native/no-inline-styles
-        style={{
-          flexDirection: 'row',
-          ...layout.padding(5),
-          backgroundColor: colors.whitesmoke,
-          flex: 1,
-          width: '100%',
-        }}>
-        {options.map((option) => {
+      <DropdownMenuContext.Consumer>
+        {({ onActiveIndexChange }) => {
           return (
-            <View style={styles.optionItem}>
-              <TouchableNative
-                // eslint-disable-next-line react-native/no-inline-styles
-                style={{
-                  width: '100%',
-                  alignItems: 'center',
-                }}>
-                <Text
-                  style={[
-                    styles.optionText,
-                    value === option.value
-                      ? { backgroundColor: colors.pink, color: colors.white }
-                      : {},
-                  ]}>
-                  {option.text}
-                </Text>
-              </TouchableNative>
+            <View
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{
+                flexDirection: 'row',
+                ...layout.padding(5),
+                backgroundColor: colors.whitesmoke,
+              }}>
+              {options.map((option) => {
+                return (
+                  <View key={String(option.value)} style={styles.optionItem}>
+                    <TouchableNative
+                      onPress={() => {
+                        this.props.onValueChange(option.value);
+                        onActiveIndexChange(-1);
+                      }}
+                      // eslint-disable-next-line react-native/no-inline-styles
+                      style={{
+                        width: '100%',
+                      }}>
+                      <Text
+                        style={[
+                          styles.optionText,
+                          value === option.value
+                            ? {
+                                backgroundColor: colors.pink,
+                                color: colors.white,
+                              }
+                            : {},
+                        ]}>
+                        {option.text}
+                      </Text>
+                    </TouchableNative>
+                  </View>
+                );
+              })}
             </View>
           );
-        })}
-      </View>
+        }}
+      </DropdownMenuContext.Consumer>
     );
   }
 }
@@ -166,6 +201,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flex: 1,
     backgroundColor: colors.white,
+    elevation: 4,
+    shadowColor: colors.black,
+    shadowOpacity: 0.1,
+    shadowRadius: StyleSheet.hairlineWidth,
+    shadowOffset: {
+      height: StyleSheet.hairlineWidth,
+      width: 0,
+    },
   },
   menuItem: {
     flex: 1,
@@ -176,16 +219,6 @@ const styles = StyleSheet.create({
     color: colors.gray,
     ...layout.padding(10, 0),
   },
-  optionBox: {
-    position: 'absolute',
-    backgroundColor: colors.whitesmoke,
-    width: '100%',
-    shadowColor: 'rgba(0, 0, 0, 0.3)',
-    shadowRadius: 6,
-    shadowOpacity: 1,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
   optionItem: {
     borderRadius: 4,
     overflow: 'hidden',
@@ -194,8 +227,9 @@ const styles = StyleSheet.create({
     ...layout.padding(5),
   },
   optionText: {
-    flex: 1,
     fontSize: 14,
+    width: '100%',
+    textAlign: 'center',
     color: colors.gray,
     ...layout.padding(5, 10),
   },

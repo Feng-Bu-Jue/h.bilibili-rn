@@ -5,14 +5,16 @@ import {
   LinkDrawResult,
   BiliBiliProtocol,
   LinkDrawResultList,
-  ListType,
-  DrawCategory,
-  PhotoCategory,
 } from '~/bilibiliApi/typings';
-import { BaseComponent, TouchableNative, DropdownMenu } from '~/components';
+import {
+  BaseComponent,
+  TouchableNative,
+  DropdownMenu,
+  Portal,
+} from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
 import { observable, runInAction, computed } from 'mobx';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
@@ -23,6 +25,7 @@ import { TabView } from 'react-native-tab-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabBar from '~/components/tabView/tabBar';
 import TabBarItem from '~/components/tabView/tabBarItem';
+import { Option } from '~/components/dropdownMenu';
 
 export function DrawListTabView(props: DrawListProps) {
   const [index, setIndex] = React.useState(0);
@@ -65,6 +68,7 @@ export function DrawListTabView(props: DrawListProps) {
                 backgroundColor: colors.white,
                 paddingTop: insets.top,
                 paddingBottom: 10,
+                /*
                 elevation: 4,
                 shadowColor: colors.black,
                 shadowOpacity: 0.1,
@@ -73,6 +77,7 @@ export function DrawListTabView(props: DrawListProps) {
                   height: StyleSheet.hairlineWidth,
                   width: 0,
                 },
+                */
               },
             ]}>
             <TabBar
@@ -129,33 +134,40 @@ export default class DrawList extends BaseComponent<Props> {
   waterfallRef: Waterfall | null = null;
 
   @observable
-  selectedListType: ListType = 'hot';
-  @observable
-  selectedCategory: DrawCategory | PhotoCategory;
-  @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
   @observable
-  menuActiveIndex = 0;
+  menuActiveIndex = -1;
+  @observable
+  categoryVlaue: string = 'all';
+  @observable
+  listTypeValue: string = 'hot';
 
   constructor(props: Props) {
     super(props);
-    if (props.pageType === 'draw') {
-      this.selectedCategory = 'illustration';
-    } else {
-      this.selectedCategory = 'all';
-    }
   }
 
-  get listType(): Array<ListType> {
-    return ['hot', 'new'];
+  get listTypeOptions(): Option<string>[] {
+    return [
+      { text: '最热', value: 'hot' },
+      { text: '最新', value: 'new' },
+    ];
   }
 
   @computed
-  get categories(): Array<DrawCategory | PhotoCategory> {
+  get categoryOptions(): Option<string>[] {
     if (this.props.pageType === 'draw') {
-      return ['all', 'illustration', 'comic', 'draw'];
+      return [
+        { text: '全部类型', value: 'all' },
+        { text: '插画', value: 'illustration' },
+        { text: '漫画', value: 'comic' },
+        { text: '其他', value: 'draw' },
+      ];
     } else {
-      return ['all', 'sifu', 'cos'];
+      return [
+        { text: '全部类型', value: 'all' },
+        { text: '私服', value: 'sifu' },
+        { text: 'cos', value: 'cos' },
+      ];
     }
   }
 
@@ -171,15 +183,15 @@ export default class DrawList extends BaseComponent<Props> {
         response = await LinkDrawApi.getDocs({
           page_num: this.pageNum,
           page_size: this.pageSize,
-          type: this.selectedListType,
-          category: this.selectedCategory as any,
+          type: this.listTypeValue as any,
+          category: this.categoryVlaue as any,
         });
       } else {
         response = await LinkDrawApi.getPhotos({
           page_num: this.pageNum,
           page_size: this.pageSize,
-          type: this.selectedListType,
-          category: this.selectedCategory as any,
+          type: this.listTypeValue as any,
+          category: this.categoryVlaue as any,
         });
       }
       // reset after api called, make sure the blank screen time of existence as an instant
@@ -192,15 +204,18 @@ export default class DrawList extends BaseComponent<Props> {
       this.pageNum++;
       if (this.pageSize * this.pageNum < response?.data?.data.total_count) {
         runInAction(() => {
-          const mappingResult = response.data.data.items.map((item) => {
-            const ratio =
-              item.item.pictures[0].img_height /
-              item.item.pictures[0].img_width;
-            return {
-              size: ratio * columnWidth + 100,
-              item: item,
-            };
-          });
+          const mappingResult = response.data.data.items
+            // b站api 是放弃画册了吗 有的item height都不返回(阿B api bug不修复一直可以的)
+            .filter((item) => !!item.item?.pictures[0]?.img_height)
+            .map((item) => {
+              const ratio =
+                item.item.pictures[0].img_height /
+                item.item.pictures[0].img_width;
+              return {
+                size: ratio * columnWidth + 100,
+                item: item,
+              };
+            });
           this.drawItems = this.drawItems.concat(mappingResult);
         });
       }
@@ -215,43 +230,6 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
-  renderCheckBox<T>(
-    value: T,
-    index: number,
-    key: string,
-    checked: boolean,
-    onPress: (value: T) => void,
-  ) {
-    return (
-      <View
-        key={key}
-        style={[
-          index ? { marginLeft: 10 } : {},
-          {
-            borderRadius: 15,
-            overflow: 'hidden',
-            ...layout.border([1], colors.lightgray),
-            ...(checked ? { backgroundColor: colors.pink } : {}),
-          },
-        ]}>
-        <TouchableNative
-          style={{
-            minWidth: 60,
-            alignItems: 'center',
-            ...layout.padding(5, 10),
-          }}
-          onPress={() => onPress(value)}>
-          <Text
-            style={{
-              ...(checked ? { color: colors.white } : { color: colors.black }),
-            }}>
-            {value}
-          </Text>
-        </TouchableNative>
-      </View>
-    );
-  }
-
   render(): React.ReactNode {
     const headerComponent = (
       <View>
@@ -261,24 +239,31 @@ export default class DrawList extends BaseComponent<Props> {
             this.menuActiveIndex = index;
           }}>
           <DropdownMenu.Option
-            value={1}
-            options={[
-              { text: '全部类型', value: 1 },
-              { text: '插画', value: 2 },
-              { text: '漫画', value: 3 },
-              { text: '其他', value: 4 },
-            ]}
+            value={this.categoryVlaue}
+            options={this.categoryOptions}
+            onValueChange={(value) => {
+              runInAction(() => {
+                this.categoryVlaue = value;
+                this.fetchDrawItems(this.waterfallRef!.getColumnWidth(), true);
+              });
+            }}
           />
           <DropdownMenu.Option
-            value={1}
-            options={[{ text: 'test', value: 1 }]}
+            value={this.listTypeValue}
+            options={this.listTypeOptions}
+            onValueChange={(value) => {
+              runInAction(() => {
+                this.listTypeValue = value;
+                this.fetchDrawItems(this.waterfallRef!.getColumnWidth(), true);
+              });
+            }}
           />
         </DropdownMenu.Box>
       </View>
     );
 
     return (
-      <View
+      <Portal.Host
         style={{
           flex: 1,
           position: 'relative',
@@ -374,35 +359,37 @@ export default class DrawList extends BaseComponent<Props> {
           refreshControlProps={{ colors: [colors.pink] }}
           onInfinite={(columnWidth) => this.fetchDrawItems(columnWidth)}
         />
-        <View
-          style={{
-            position: 'absolute',
-            elevation: 4,
-            right: 20,
-            bottom: 40,
-            borderRadius: 20,
-            overflow: 'hidden',
-          }}>
-          <TouchableNative
-            onPress={() => {
-              this.waterfallRef?.scrollTo({
-                y: 0,
-                animated: true,
-              });
-            }}
+        <Portal>
+          <View
             style={{
-              height: 40,
-              width: 40,
-              backgroundColor: colors.white,
-              justifyContent: 'center',
-              alignItems: 'center',
+              position: 'absolute',
+              elevation: 4,
+              right: 20,
+              bottom: 40,
+              borderRadius: 20,
+              overflow: 'hidden',
             }}>
-            <View>
-              <IconArrowUp size={30} />
-            </View>
-          </TouchableNative>
-        </View>
-      </View>
+            <TouchableNative
+              onPress={() => {
+                this.waterfallRef?.scrollTo({
+                  y: 0,
+                  animated: true,
+                });
+              }}
+              style={{
+                height: 40,
+                width: 40,
+                backgroundColor: colors.white,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <View>
+                <IconArrowUp size={30} />
+              </View>
+            </TouchableNative>
+          </View>
+        </Portal>
+      </Portal.Host>
     );
   }
 }
