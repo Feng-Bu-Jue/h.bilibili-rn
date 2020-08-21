@@ -232,42 +232,36 @@ export default class DrawList extends BaseComponent<Props> {
 
   render(): React.ReactNode {
     const headerComponent = (
-      <View>
-        <DropdownMenu.Box
-          activeIndex={this.menuActiveIndex}
-          onActiveIndexChange={(index) => {
-            this.menuActiveIndex = index;
-          }}>
-          <DropdownMenu.Option
-            value={this.categoryVlaue}
-            options={this.categoryOptions}
-            onValueChange={(value) => {
-              runInAction(() => {
-                this.categoryVlaue = value;
-                this.fetchDrawItems(this.waterfallRef!.getColumnWidth(), true);
-              });
-            }}
-          />
-          <DropdownMenu.Option
-            value={this.listTypeValue}
-            options={this.listTypeOptions}
-            onValueChange={(value) => {
-              runInAction(() => {
-                this.listTypeValue = value;
-                this.fetchDrawItems(this.waterfallRef!.getColumnWidth(), true);
-              });
-            }}
-          />
-        </DropdownMenu.Box>
-      </View>
+      <DropdownMenu.Box
+        activeIndex={this.menuActiveIndex}
+        onActiveIndexChange={(index) => {
+          this.menuActiveIndex = index;
+        }}>
+        <DropdownMenu.Option
+          value={this.categoryVlaue}
+          options={this.categoryOptions}
+          onValueChange={(value) => {
+            runInAction(() => {
+              this.categoryVlaue = value;
+              this.reloadDrawItems();
+            });
+          }}
+        />
+        <DropdownMenu.Option
+          value={this.listTypeValue}
+          options={this.listTypeOptions}
+          onValueChange={(value) => {
+            runInAction(() => {
+              this.listTypeValue = value;
+              this.reloadDrawItems();
+            });
+          }}
+        />
+      </DropdownMenu.Box>
     );
 
     return (
-      <Portal.Host
-        style={{
-          flex: 1,
-          position: 'relative',
-        }}>
+      <Portal.Host>
         <Waterfall
           ref={(r) => (this.waterfallRef = r)}
           onInitData={(columnWidth) => this.fetchDrawItems(columnWidth)}
@@ -277,6 +271,7 @@ export default class DrawList extends BaseComponent<Props> {
           bufferAmount={10}
           containerStyle={layout.padding(0, 10)}
           bounces={true}
+          stickyHeaderIndices={[0]}
           HeaderComponent={headerComponent}
           renderItem={(
             {

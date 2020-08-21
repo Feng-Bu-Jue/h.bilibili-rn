@@ -16,7 +16,6 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { Portal } from '.';
 
 export type WaterfallProps<TItem> = {
   columnNum: number;
@@ -382,18 +381,16 @@ export default class Waterfall<TItem = any> extends React.Component<
           }
           scrollEventThrottle={20}
           {...(rest as any)}>
-          <Portal.Host>
-            {HeaderComponent}
-            <Animated.View style={[styles.container, containerStyle]}>
-              <Animated.View
-                style={[{ height: this.itemsRunwayOffset }, containerStyle]}
-                onLayout={this.onItemsRunwayLayout}>
-                {items}
-              </Animated.View>
-              {!!onInfinite && renderLoadMore?.call(undefined, loading)}
+          {HeaderComponent}
+          <Animated.View style={[styles.container, containerStyle]}>
+            <Animated.View
+              style={[{ height: this.itemsRunwayOffset }, containerStyle]}
+              onLayout={this.onItemsRunwayLayout}>
+              {items}
             </Animated.View>
-            {FooterComponent}
-          </Portal.Host>
+            {!!onInfinite && renderLoadMore?.call(undefined, loading)}
+          </Animated.View>
+          {FooterComponent}
         </ScrollView>
       </View>
     );
