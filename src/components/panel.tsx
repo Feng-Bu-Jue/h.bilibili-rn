@@ -14,5 +14,6 @@ export default class Panel extends React.PureComponent<{
 const styles = StyleSheet.create({
   pannel: {
     backgroundColor: colors.white,
+    flex: 1,
   },
 });

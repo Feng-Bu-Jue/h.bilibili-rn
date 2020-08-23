@@ -269,6 +269,7 @@ export default class DrawList extends BaseComponent<Props> {
           columnGap={this.columnGap}
           itemInfoData={this.drawItems}
           bufferAmount={10}
+          infiniteThreshold={800}
           containerStyle={layout.padding(0, 10)}
           bounces={true}
           stickyHeaderIndices={[0]}

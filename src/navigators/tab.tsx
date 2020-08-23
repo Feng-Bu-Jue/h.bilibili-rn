@@ -5,14 +5,11 @@ import { TabScreens } from '~/typings/screens';
 import IconPicfill from '~/assets/iconfont/IconPicfill';
 import IconPeople from '~/assets/iconfont/IconPeople';
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs/lib/typescript/src/types';
-import { View } from 'react-native';
 import { TouchableNative } from '~/components';
 import { DrawListTabView } from '~/screens/draw/list';
+import Login from '~/screens/account/login';
 
 const Tab = createBottomTabNavigator();
-const TestScreen = () => {
-  return <View />;
-};
 
 export const TabMenu = () => {
   return (
@@ -51,7 +48,7 @@ export const TabMenu = () => {
         },
       })}>
       <Tab.Screen name={TabScreens.Home} component={DrawListTabView} />
-      <Tab.Screen name={TabScreens.Me} component={TestScreen} />
+      <Tab.Screen name={TabScreens.Me} component={Login} />
     </Tab.Navigator>
   );
 };

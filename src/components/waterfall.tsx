@@ -22,6 +22,7 @@ export type WaterfallProps<TItem> = {
   columnGap?: number;
   itemInfoData: ItemInfo<TItem>[];
   bufferAmount?: number;
+  infiniteThreshold?: number;
   renderItem: (
     itemInfo: ItemInfo<TItem>,
     columnWidth: number,
@@ -58,6 +59,7 @@ export default class Waterfall<TItem = any> extends React.Component<
   static defaultProps: Partial<WaterfallProps<any>> = {
     columnGap: 0,
     bufferAmount: 10,
+    infiniteThreshold: 50,
     renderLoadMore: (loading) => (
       <View
         style={[
@@ -125,7 +127,7 @@ export default class Waterfall<TItem = any> extends React.Component<
   }: NativeSyntheticEvent<NativeScrollEvent>) => {
     this.setState({ offset: y });
     if (
-      y + height >= contentHeight - 20 &&
+      y + height >= contentHeight - this.props.infiniteThreshold! &&
       this.lastMeasuredIndex === this.props.itemInfoData.length - 1 &&
       !this.state.refreshing &&
       !this.state.loading

@@ -8,7 +8,7 @@ import {
   Filter,
   Query,
 } from 'ts-retrofit';
-import { QueryMapW, ApiDescriptor, ApiEndponits } from '../extensions';
+import { QueryMapW, ApiEndponits } from '../extensions';
 import { BiliBiliProtocol, ReplyResult, AddReplyResult } from '../typings';
 import { SignHelper } from '../util';
 

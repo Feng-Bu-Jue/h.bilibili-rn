@@ -6,6 +6,7 @@ import {
   StackNavigationOptions,
   StackCardStyleInterpolator,
   StackCardInterpolationProps,
+  StackCardInterpolatedStyle,
 } from '@react-navigation/stack';
 import DrawDetail from '~/screens/draw/detail';
 import { TabMenu } from './tab';
@@ -23,7 +24,7 @@ export const cardStyleInterpolator: StackCardStyleInterpolator = (
     cardStyle: {
       opacity: current.progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.25, 1],
+        outputRange: [0.8, 1],
       }),
       transform: [
         {
@@ -34,7 +35,6 @@ export const cardStyleInterpolator: StackCardStyleInterpolator = (
         },
       ],
     },
-
     overlayStyle: {
       opacity: current.progress.interpolate({
         inputRange: [0, 1],
@@ -42,7 +42,7 @@ export const cardStyleInterpolator: StackCardStyleInterpolator = (
         extrapolate: 'clamp',
       }),
     },
-  };
+  } as StackCardInterpolatedStyle;
 };
 
 const defaultScreenOptions: StackNavigationOptions = {
