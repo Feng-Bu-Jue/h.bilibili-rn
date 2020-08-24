@@ -1,1 +1,4 @@
 *.pbxproj -text
+*.bat text eol=crlf
+*.tsx text eol=lf
+*.ts text eol=lf
