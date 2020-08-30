@@ -1,4 +1,5 @@
 import { BaseService, QueryMap, ServiceBuilder } from 'ts-retrofit';
+import { appStore } from '~/stores/appStore';
 
 export const ApiEndponits = {
   apivc: 'https://api.vc.bilibili.com/',
@@ -33,7 +34,9 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
   return builder
     .setStandalone(true)
     .setRequestInterceptors((config) => {
-      // config.onDownloadProgress;
+      if (appStore.authCookie) {
+        config.headers.cookie = appStore.authCookie;
+      }
       return config;
     })
     .setResponseInterceptors((response) => {
@@ -47,8 +50,7 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
 以下代码 放弃中...
 !!! 写个泛型可把我累死了
 */
-/*
-const RegisteredServices = {
+/* const RegisteredServices = {
   ['LinkDrawApi']: LinkDrawService,
 };
 
@@ -69,5 +71,4 @@ const BuildToExports = <
   return exportsObject;
 };
 
-export default BuildToExports(RegisteredServices);
-*/
+export default BuildToExports(RegisteredServices); */

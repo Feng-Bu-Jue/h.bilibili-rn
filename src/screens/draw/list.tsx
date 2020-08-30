@@ -160,7 +160,6 @@ export default class DrawList extends BaseComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-
     this.$reactionDisposers.push(
       reaction(
         () => appStore.tabBarVisible,

@@ -6,4 +6,6 @@ export enum TabScreens {
 export enum StackScreens {
   DrawList = 'DrawList',
   DrawDetail = 'DrawDetail',
+  Login = 'Login',
+  Me = 'Me',
 }

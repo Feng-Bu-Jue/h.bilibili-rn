@@ -10,14 +10,6 @@ import { colors } from '~/constants/colors';
 
 enableScreens();
 
-const sleep = (ms: number) => {
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, ms);
-  });
-};
-
 type AppProps = {};
 
 @observer
@@ -28,8 +20,7 @@ export default class App extends React.Component<AppProps> {
   }
 
   async ready() {
-    await sleep(1000);
-    appStore.ready();
+    await appStore.ready();
   }
 
   render() {

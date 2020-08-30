@@ -9,6 +9,7 @@ import {
   StackCardInterpolatedStyle,
 } from '@react-navigation/stack';
 import DrawDetail from '~/screens/draw/detail';
+import Login from '~/screens/account/login';
 import { TabMenu } from './tab';
 import { sizes, colors } from '~/constants';
 import { Platform, StyleSheet } from 'react-native';
@@ -71,6 +72,18 @@ export const Router = () => {
         }}>
         <Stack.Screen name={TabScreens.Home} component={TabMenu} />
         <Stack.Screen name={StackScreens.DrawDetail} component={DrawDetail} />
+        <Stack.Screen
+          name={StackScreens.Login}
+          options={
+            {
+              headerTransparent: true,
+              headerTitleStyle: { color: colors.white },
+              headerBackTitleStyle: { color: colors.white },
+              headerTintColor: colors.white,
+            } as StackNavigationOptions
+          }
+          component={Login}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

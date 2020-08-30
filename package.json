@@ -11,12 +11,14 @@
     "icon": "npx iconfont-rn"
   },
   "dependencies": {
+    "@react-native-community/async-storage": "^1.12.0",
     "@react-native-community/cameraroll": "^4.0.0",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/bottom-tabs": "^5.7.1",
     "@react-navigation/native": "^5.7.1",
     "@react-navigation/stack": "^5.7.1",
     "i18n-js": "^3.7.0",
+    "jsencrypt": "^3.0.0-rc.1",
     "lodash.merge": "^4.6.2",
     "lodash.remove": "^4.7.0",
     "lottie-react-native": "^3.4.0",

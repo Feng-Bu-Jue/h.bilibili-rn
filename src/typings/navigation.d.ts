@@ -1,7 +1,7 @@
 import { StackScreens } from './screens';
 import { StackScreenProps } from '@react-navigation/stack';
 
-type RootParamList = DrawStackParamList;
+type RootParamList = DrawStackParamList & AccountStackParamList;
 
 type DrawStackParamList = {
   [StackScreens.DrawList]: undefined;
@@ -10,10 +10,17 @@ type DrawStackParamList = {
   };
 };
 
+type AccountStackParamList = {
+  [StackScreens.Login]: undefined;
+  [StackScreens.Me]: undefined;
+};
+
 type BaseScreenProps<RouteName extends keyof RootParamList> = StackScreenProps<
   RootParamList,
   RouteName
 >;
 
-type DrawListProps = BaseScreenProps<HomeStackScreens.DrawList>;
-type DrawDetailProps = BaseScreenProps<HomeStackScreens.DrawDetail>;
+type DrawListProps = BaseScreenProps<StackScreens.DrawList>;
+type DrawDetailProps = BaseScreenProps<StackScreens.DrawDetail>;
+type LoginProps = BaseScreenProps<StackScreens.Login>;
+type MeProps = BaseScreenProps<StackScreens.Me>;

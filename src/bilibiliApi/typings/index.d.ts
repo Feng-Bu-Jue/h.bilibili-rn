@@ -130,10 +130,35 @@ export interface Member {
   public vip: MemberVip;
 }
 
-export class MemberLevel {
+export interface MemberLevel {
   public current_level: number;
 }
-export class MemberVip {
+export interface MemberVip {
   public vipStatus: number;
   public type: number;
+}
+
+export interface RSAPublicKeyResult {
+  public key: string;
+  public hash: string;
+}
+
+export interface AuthResult {
+  public status: number;
+  public token_info: AuthToken;
+  public cookie_info: any;
+  public sso: Array<string>;
+}
+
+export interface AuthToken {
+  public mid: number;
+  public access_token: string;
+  public refresh_token: string;
+  public expires_in: number;
+}
+
+export interface SSOResult {
+  public cookie: string;
+  public status: string;
+  public ts: number;
 }

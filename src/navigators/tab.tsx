@@ -7,7 +7,7 @@ import IconPeople from '~/assets/iconfont/IconPeople';
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs/lib/typescript/src/types';
 import { TouchableNative, BottomTabBar } from '~/components';
 import { DrawListTabView } from '~/screens/draw/list';
-import Login from '~/screens/account/login';
+import Me from '~/screens/account/me';
 import { StyleSheet } from 'react-native';
 import { computed } from 'mobx';
 import { appStore } from '~/stores/appStore';
@@ -60,7 +60,7 @@ export const TabMenu = observer(() => {
         },
       })}>
       <Tab.Screen name={TabScreens.Home} component={DrawListTabView} />
-      <Tab.Screen name={TabScreens.Me} component={Login} />
+      <Tab.Screen name={TabScreens.Me} component={Me} />
     </Tab.Navigator>
   );
 });

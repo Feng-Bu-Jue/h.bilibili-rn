@@ -6,13 +6,68 @@ import { colors, layout } from '~/constants';
 import { Panel, TouchableNative } from '~/components';
 import { useLocalStore, observer } from 'mobx-react';
 import { runInAction } from 'mobx';
+import { AuthApi } from '~/bilibiliApi';
+// @ts-ignore
+import * as JsEncryptModule from 'jsencrypt';
+import { LoginProps } from '~/typings/navigation';
+import { appStore } from '~/stores/appStore';
 
-export default observer(() => {
+const Login = observer((props: LoginProps) => {
   const insets = useSafeAreaInsets();
   const store = useLocalStore(() => ({
     username: '',
     password: '',
   }));
+
+  const onSigninPress = async () => {
+    const { username, password } = store;
+    console.log(username, password);
+    // 0. TODO: vlidate password & username
+
+    // 1. encrypt password
+    const {
+      data: { hash, key },
+    } = await AuthApi.encryptPassword({
+      act: 'getkey',
+      _: Date.now().toString().substr(0, 10),
+    });
+    console.log(hash, key);
+    let encrypt = new JsEncryptModule.JSEncrypt();
+    encrypt.setPublicKey(key);
+    let encryptedPassword = encrypt.encrypt(hash.concat(password));
+    console.log(encryptedPassword);
+
+    // 2. get access token
+    const {
+      data: {
+        data: {
+          token_info: { access_token },
+        },
+      },
+    } = await AuthApi.login({
+      appkey: '1d8b6e7d45233436',
+      build: '5290000',
+      mobi_app: 'android',
+      platform: 'android',
+      password: encryptedPassword,
+      ts: Date.now().toString().substr(0, 10),
+      username: username,
+      captcha: '',
+    });
+
+    // 3. stored cookie
+    const {
+      data: {
+        data: { cookie },
+      },
+    } = await AuthApi.freshSSO(access_token);
+    await appStore.saveAuthResult(cookie);
+
+    console.log(cookie);
+    if (cookie) {
+      props.navigation.goBack();
+    }
+  };
 
   return (
     <Panel>
@@ -45,13 +100,19 @@ export default observer(() => {
             });
           }}
         />
-        <TouchableNative style={styles.signinButton}>
+        <TouchableNative
+          style={styles.signinButton}
+          onPress={() => {
+            onSigninPress();
+          }}>
           <Text style={styles.singinText}>{'登录'}</Text>
         </TouchableNative>
       </Panel>
     </Panel>
   );
 });
+
+export default Login;
 
 const styles = StyleSheet.create({
   logoContainer: {
