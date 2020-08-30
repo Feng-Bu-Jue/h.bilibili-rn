@@ -13,8 +13,16 @@ import {
   Portal,
 } from '~/components';
 import Waterfall, { ItemInfo } from '~/components/waterfall';
-import { observable, runInAction, computed } from 'mobx';
-import { View, Text, Image } from 'react-native';
+import { observable, runInAction, computed, reaction } from 'mobx';
+import {
+  View,
+  Text,
+  Image,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  Animated,
+  LayoutRectangle,
+} from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
 import { layout, colors } from '~/constants';
@@ -26,6 +34,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabBar from '~/components/tabView/tabBar';
 import TabBarItem from '~/components/tabView/tabBarItem';
 import { Option } from '~/components/dropdownMenu';
+import { appStore } from '~/stores/appStore';
 
 export function DrawListTabView(props: DrawListProps) {
   const [index, setIndex] = React.useState(0);
@@ -131,7 +140,14 @@ export default class DrawList extends BaseComponent<Props> {
   columnCount = 2;
   columnGap = 8;
 
+  lastRecordedOffetY = 0;
+  menuTranslateY = new Animated.Value(0);
+
   waterfallRef: Waterfall | null = null;
+  menuLayout?: LayoutRectangle;
+
+  @observable
+  stickyHeaderIndices = [0];
 
   @observable
   drawItems: ItemInfo<LinkDrawResult>[] = [];
@@ -144,6 +160,27 @@ export default class DrawList extends BaseComponent<Props> {
 
   constructor(props: Props) {
     super(props);
+
+    this.$reactionDisposers.push(
+      reaction(
+        () => appStore.tabBarVisible,
+        (visible) => {
+          if (visible) {
+            Animated.timing(this.menuTranslateY, {
+              toValue: 0,
+              duration: 300,
+              useNativeDriver: true,
+            }).start();
+          } else {
+            Animated.timing(this.menuTranslateY, {
+              toValue: -this.menuLayout!.height,
+              duration: 300,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+      ),
+    );
   }
 
   get listTypeOptions(): Option<string>[] {
@@ -230,34 +267,63 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
+  /*-------------------------EventHandler------------------------- */
+
+  onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const {
+      contentOffset: { y },
+    } = event.nativeEvent;
+    const movedDistance = y - this.lastRecordedOffetY;
+    if (movedDistance < -40) {
+      appStore.showTabBar();
+    }
+    if (movedDistance > 40) {
+      appStore.hideTabBar();
+    }
+  };
+
   render(): React.ReactNode {
     const headerComponent = (
-      <DropdownMenu.Box
-        activeIndex={this.menuActiveIndex}
-        onActiveIndexChange={(index) => {
-          this.menuActiveIndex = index;
+      <View
+        onLayout={(e) => {
+          this.menuLayout = e.nativeEvent.layout;
         }}>
-        <DropdownMenu.Option
-          value={this.categoryVlaue}
-          options={this.categoryOptions}
-          onValueChange={(value) => {
-            runInAction(() => {
-              this.categoryVlaue = value;
-              this.reloadDrawItems();
-            });
-          }}
-        />
-        <DropdownMenu.Option
-          value={this.listTypeValue}
-          options={this.listTypeOptions}
-          onValueChange={(value) => {
-            runInAction(() => {
-              this.listTypeValue = value;
-              this.reloadDrawItems();
-            });
-          }}
-        />
-      </DropdownMenu.Box>
+        <Animated.View
+          style={{
+            transform: [
+              {
+                translateY: this.menuTranslateY,
+              },
+            ],
+          }}>
+          <DropdownMenu.Box
+            activeIndex={this.menuActiveIndex}
+            onActiveIndexChange={(index) => {
+              this.menuActiveIndex = index;
+            }}>
+            <DropdownMenu.Option
+              value={this.categoryVlaue}
+              options={this.categoryOptions}
+              onValueChange={(value) => {
+                runInAction(() => {
+                  this.categoryVlaue = value;
+                  this.reloadDrawItems();
+                });
+              }}
+            />
+            <DropdownMenu.Option
+              value={this.listTypeValue}
+              options={this.listTypeOptions}
+              onValueChange={(value) => {
+                runInAction(() => {
+                  this.listTypeValue = value;
+                  this.reloadDrawItems();
+                });
+              }}
+            />
+          </DropdownMenu.Box>
+        </Animated.View>
+      </View>
     );
 
     return (
@@ -272,7 +338,7 @@ export default class DrawList extends BaseComponent<Props> {
           infiniteThreshold={800}
           containerStyle={layout.padding(0, 10)}
           bounces={true}
-          stickyHeaderIndices={[0]}
+          stickyHeaderIndices={this.stickyHeaderIndices.slice()}
           HeaderComponent={headerComponent}
           renderItem={(
             {
@@ -351,6 +417,13 @@ export default class DrawList extends BaseComponent<Props> {
           onRefresh={(columnWidth) => {
             this.pageNum = 1;
             return this.fetchDrawItems(columnWidth, true);
+          }}
+          onScroll={this.onScroll}
+          onScrollEndDrag={(e) => {
+            this.lastRecordedOffetY = e.nativeEvent.contentOffset.y;
+          }}
+          onTouchMove={(e) => {
+            console.log(e.nativeEvent.pageY);
           }}
           refreshControlProps={{ colors: [colors.pink] }}
           onInfinite={(columnWidth) => this.fetchDrawItems(columnWidth)}
