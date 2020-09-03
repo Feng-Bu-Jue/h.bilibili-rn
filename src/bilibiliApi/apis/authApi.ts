@@ -3,46 +3,35 @@ import {
   BaseService,
   Response,
   POST,
-  Queries,
   ActionFilter,
   Filter,
-  Query,
   BasePath,
+  FormUrlEncoded,
+  Field,
+  GET,
+  Query,
 } from 'ts-retrofit';
-import { QueryMapW, ApiEndponits } from '../extensions';
+import { ApiEndponits, FieldMapW, QueryMapW } from '../extensions';
 import {
   BiliBiliProtocol,
-  ReplyResult,
-  AddReplyResult,
   RSAPublicKeyResult,
   AuthResult,
   SSOResult,
 } from '../typings';
 import { SignHelper } from '../util';
 
-const signatureFilter: Filter = {
-  invoke: (methodContext, config, next) => {
-    console.log(config.params);
-    const appSecret = '560c52ccd288fed045859ed18bffd973';
-    config.params.sign = SignHelper.md5Sign(config.params, (signString) =>
-      signString.concat(appSecret),
-    );
-    return next();
-  },
-};
-
 @BasePath('')
 export class AuthService extends BaseService {
   @POST(`${ApiEndponits.passport}api/v3/oauth2/login`)
-  @ActionFilter(signatureFilter)
+  @FormUrlEncoded
   async login(
-    @QueryMapW()
+    @FieldMapW()
     query: any,
   ): Promise<Response<BiliBiliProtocol<AuthResult>>> {
     return <Response<BiliBiliProtocol<AuthResult>>>{};
   }
 
-  @POST(`${ApiEndponits.passport}login`)
+  @GET(`${ApiEndponits.passport}login`)
   async encryptPassword(
     @QueryMapW()
     query = { act: 'getkey', _: Date.now().toString().substr(0, 10) },
@@ -50,7 +39,7 @@ export class AuthService extends BaseService {
     return <Response<RSAPublicKeyResult>>{};
   }
 
-  @POST(`${ApiEndponits.kaaassNet}biliapi/user/sso`)
+  @GET(`${ApiEndponits.kaaassNet}biliapi/user/sso`)
   async freshSSO(
     @Query('access_key')
     accessToken: string,

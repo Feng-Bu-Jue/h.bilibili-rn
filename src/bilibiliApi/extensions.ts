@@ -1,12 +1,12 @@
-import { BaseService, QueryMap, ServiceBuilder } from 'ts-retrofit';
+import { BaseService, QueryMap, ServiceBuilder, FieldMap } from 'ts-retrofit';
 import { appStore } from '~/stores/appStore';
 
 export const ApiEndponits = {
-  apivc: 'https://api.vc.bilibili.com/',
-  api: 'https://api.bilibili.com/',
-  kaaassNet: 'https://api.kaaass.net/',
-  apiLive: 'https://api.live.bilibili.com/',
-  passport: 'https://passport.bilibili.com/',
+  apivc: 'http://api.vc.bilibili.com/',
+  api: 'http://api.bilibili.com/',
+  kaaassNet: 'http://api.kaaass.net/',
+  apiLive: 'http://api.live.bilibili.com/',
+  passport: 'http://passport.bilibili.com/',
 };
 
 export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
@@ -23,6 +23,10 @@ export const QueryMapW = () => {
   return QueryMap;
 };
 
+export const FieldMapW = () => {
+  return FieldMap;
+};
+
 export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
   const endpoint = (ApiEndponits as any)[
     service.prototype.__meta__.ApiDescriptor
@@ -35,6 +39,9 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
     .setStandalone(true)
     .setRequestInterceptors((config) => {
       if (appStore.authCookie) {
+        config.headers.useragent =
+          'Mozilla/5.0 BiliDroid/5.44.2 (bbcallen@gmail.com)';
+        config.headers.referer = 'https://www.bilibili.com/';
         config.headers.cookie = appStore.authCookie;
       }
       return config;

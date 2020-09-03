@@ -8,14 +8,15 @@ import { useLocalStore, observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { AuthApi } from '~/bilibiliApi';
 // @ts-ignore
-import * as JsEncryptModule from 'jsencrypt';
+import { JSEncrypt } from 'jsencrypt';
 import { LoginProps } from '~/typings/navigation';
 import { appStore } from '~/stores/appStore';
+import { SignHelper } from '~/bilibiliApi/util';
 
 const Login = observer((props: LoginProps) => {
   const insets = useSafeAreaInsets();
   const store = useLocalStore(() => ({
-    username: '',
+    username: '@qq.com',
     password: '',
   }));
 
@@ -23,7 +24,6 @@ const Login = observer((props: LoginProps) => {
     const { username, password } = store;
     console.log(username, password);
     // 0. TODO: vlidate password & username
-
     // 1. encrypt password
     const {
       data: { hash, key },
@@ -32,29 +32,34 @@ const Login = observer((props: LoginProps) => {
       _: Date.now().toString().substr(0, 10),
     });
     console.log(hash, key);
-    let encrypt = new JsEncryptModule.JSEncrypt();
+    let encrypt = new JSEncrypt();
     encrypt.setPublicKey(key);
     let encryptedPassword = encrypt.encrypt(hash.concat(password));
-    console.log(encryptedPassword);
 
     // 2. get access token
+    const loginParams = {
+      username: username,
+      password: encryptedPassword,
+      gee_type: 10,
+      appkey: '4409e2ce8ffd12b8',
+      mobi_app: 'android',
+      platform: 'android',
+      ts: 1599129389,
+    } as any;
+    // signature
+    const appSecret = '59b43e04ad6965f34319062b478f83dd';
+    loginParams.sign = SignHelper.md5Sign(loginParams, (signString) =>
+      signString.concat(appSecret),
+    );
     const {
       data: {
         data: {
           token_info: { access_token },
         },
       },
-    } = await AuthApi.login({
-      appkey: '1d8b6e7d45233436',
-      build: '5290000',
-      mobi_app: 'android',
-      platform: 'android',
-      password: encryptedPassword,
-      ts: Date.now().toString().substr(0, 10),
-      username: username,
-      captcha: '',
-    });
+    } = await AuthApi.login(loginParams);
 
+    console.log(access_token);
     // 3. stored cookie
     const {
       data: {
