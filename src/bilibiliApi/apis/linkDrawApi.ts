@@ -8,10 +8,11 @@ import {
   PhotoCategory,
   LinkDrawResult,
 } from '../typings';
-import { QueryMapW, ApiDescriptor } from '../extensions';
+import { QueryMapW, ApiDescriptor, Authorize } from '../extensions';
 
 @ApiDescriptor('apivc')
 export class LinkDrawService extends BaseService {
+  @Authorize()
   @GET('link_draw/v2/doc/list')
   async getDocs(
     @QueryMapW()
@@ -25,6 +26,7 @@ export class LinkDrawService extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResultList>>>{};
   }
 
+  @Authorize()
   @GET('link_draw/v2/photo/list')
   async getPhotos(
     @QueryMapW()
@@ -38,6 +40,7 @@ export class LinkDrawService extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResultList>>>{};
   }
 
+  @Authorize()
   @GET('link_draw/v1/doc/detail')
   async getDocDetail(
     @QueryMapW()

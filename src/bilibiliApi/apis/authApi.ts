@@ -11,7 +11,7 @@ import {
   GET,
   Query,
 } from 'ts-retrofit';
-import { ApiEndponits, FieldMapW, QueryMapW } from '../extensions';
+import { ApiEndponits, FieldMapW, QueryMapW, FixedParms } from '../extensions';
 import {
   BiliBiliProtocol,
   RSAPublicKeyResult,
@@ -19,11 +19,13 @@ import {
   SSOResult,
 } from '../typings';
 import { SignHelper } from '../util';
+import { apiConfig } from '../contact';
 
 @BasePath('')
 export class AuthService extends BaseService {
   @POST(`${ApiEndponits.passport}api/v3/oauth2/login`)
   @FormUrlEncoded
+  @FixedParms()
   async login(
     @FieldMapW()
     query: any,
@@ -32,7 +34,7 @@ export class AuthService extends BaseService {
   }
 
   @GET(`${ApiEndponits.passport}login`)
-  async encryptPassword(
+  async getEncryptKey(
     @QueryMapW()
     query = { act: 'getkey', _: Date.now().toString().substr(0, 10) },
   ): Promise<Response<RSAPublicKeyResult>> {
@@ -43,6 +45,18 @@ export class AuthService extends BaseService {
   async freshSSO(
     @Query('access_key')
     accessToken: string,
+    @Query('appkey')
+    appkey: string,
+  ): Promise<Response<BiliBiliProtocol<SSOResult>>> {
+    return <Response<BiliBiliProtocol<SSOResult>>>{};
+  }
+
+  @GET(`${ApiEndponits.api}login/sso`)
+  async SSO(
+    @Query('access_key')
+    accessToken: string,
+    @Query('appkey')
+    appkey: string = apiConfig.appkey,
   ): Promise<Response<BiliBiliProtocol<SSOResult>>> {
     return <Response<BiliBiliProtocol<SSOResult>>>{};
   }

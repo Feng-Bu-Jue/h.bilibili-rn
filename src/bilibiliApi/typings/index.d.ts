@@ -146,7 +146,7 @@ export interface RSAPublicKeyResult {
 export interface AuthResult {
   public status: number;
   public token_info: AuthToken;
-  public cookie_info: any;
+  public cookie_info: CookieInfo;
   public sso: Array<string>;
 }
 
@@ -161,4 +161,31 @@ export interface SSOResult {
   public cookie: string;
   public status: string;
   public ts: number;
+}
+
+export interface CookieInfo {
+  cookies: CookieItem[];
+}
+
+export interface CookieItem {
+  expires: number;
+  http_onl: number;
+  name: string;
+  value: string;
+}
+
+export interface UserSpaceDetail {
+  card: SpaceCard;
+  images: { imgUrl: string };
+}
+
+export interface SpaceCard {
+  name: string;
+  face: string;
+  fans: number;
+  mid: number;
+  level_info: MemberLevel;
+  sex: string;
+  sign: string;
+  vip: MemberVip;
 }

@@ -1,4 +1,4 @@
 export enum StorageKey {
-  AuthInfo = 'AuthInfo',
+  AuthToken = 'AuthToken',
   AuthCookie = 'AuthCookie',
 }

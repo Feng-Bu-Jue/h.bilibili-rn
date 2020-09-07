@@ -39,7 +39,7 @@
     "react-native-svg": "^12.1.0",
     "react-native-tab-view": "^2.15.0",
     "ts-md5": "^1.2.7",
-    "ts-retrofit": "git+ssh://git@github.com:Feng-Bu-Jue/ts-retrofit.git"
+    "ts-retrofit": "git+https://github.com/Feng-Bu-Jue/ts-retrofit.git"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",

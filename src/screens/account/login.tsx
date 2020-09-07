@@ -6,17 +6,16 @@ import { colors, layout } from '~/constants';
 import { Panel, TouchableNative } from '~/components';
 import { useLocalStore, observer } from 'mobx-react';
 import { runInAction } from 'mobx';
-import { AuthApi } from '~/bilibiliApi';
+import { AuthApi, UserApi } from '~/bilibiliApi';
 // @ts-ignore
 import { JSEncrypt } from 'jsencrypt';
 import { LoginProps } from '~/typings/navigation';
 import { appStore } from '~/stores/appStore';
-import { SignHelper } from '~/bilibiliApi/util';
 
 const Login = observer((props: LoginProps) => {
   const insets = useSafeAreaInsets();
   const store = useLocalStore(() => ({
-    username: '@qq.com',
+    username: '',
     password: '',
   }));
 
@@ -24,53 +23,38 @@ const Login = observer((props: LoginProps) => {
     const { username, password } = store;
     console.log(username, password);
     // 0. TODO: vlidate password & username
-    // 1. encrypt password
-    const {
-      data: { hash, key },
-    } = await AuthApi.encryptPassword({
-      act: 'getkey',
-      _: Date.now().toString().substr(0, 10),
-    });
-    console.log(hash, key);
-    let encrypt = new JSEncrypt();
-    encrypt.setPublicKey(key);
-    let encryptedPassword = encrypt.encrypt(hash.concat(password));
 
-    // 2. get access token
-    const loginParams = {
-      username: username,
-      password: encryptedPassword,
-      gee_type: 10,
-      appkey: '4409e2ce8ffd12b8',
-      mobi_app: 'android',
-      platform: 'android',
-      ts: 1599129389,
-    } as any;
-    // signature
-    const appSecret = '59b43e04ad6965f34319062b478f83dd';
-    loginParams.sign = SignHelper.md5Sign(loginParams, (signString) =>
-      signString.concat(appSecret),
-    );
-    const {
-      data: {
+    try {
+      // 1. encrypt password
+      const {
+        data: { hash, key },
+      } = await AuthApi.getEncryptKey();
+      let encrypt = new JSEncrypt();
+      encrypt.setPublicKey(key);
+      let encryptedPassword = encrypt.encrypt(hash.concat(password));
+
+      // 2. get access token
+      const {
+        data: { data: authResult },
+      } = await AuthApi.login({
+        username: username,
+        password: encryptedPassword,
+        gee_type: 10,
+      });
+      // 3. stored cookie
+      /*
+      const {
         data: {
-          token_info: { access_token },
+          data: { cookie },
         },
-      },
-    } = await AuthApi.login(loginParams);
-
-    console.log(access_token);
-    // 3. stored cookie
-    const {
-      data: {
-        data: { cookie },
-      },
-    } = await AuthApi.freshSSO(access_token);
-    await appStore.saveAuthResult(cookie);
-
-    console.log(cookie);
-    if (cookie) {
+      } = await AuthApi.freshSSO(authResult.token_info.access_token);
+      */
+      await AuthApi.SSO(authResult.token_info.access_token);
+      await appStore.saveAuthResult(authResult);
+      await UserApi.userDetail({ vmid: appStore.authToken!.mid });
       props.navigation.goBack();
+    } catch (e) {
+      console.log(e);
     }
   };
 

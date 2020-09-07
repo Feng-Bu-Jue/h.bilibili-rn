@@ -1,10 +1,12 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { observer } from 'mobx-react';
-import { Panel, TouchableNative } from '~/components';
+import { Panel, TouchableNative, BaseComponent } from '~/components';
 import { MeProps } from '~/typings/navigation';
 import { StackScreens } from '~/typings/screens';
 import { colors, layout } from '~/constants';
+import { appStore } from '~/stores/appStore';
+import { UserApi } from '~/bilibiliApi';
 
 export default observer((props: MeProps) => {
   return (
@@ -16,7 +18,11 @@ export default observer((props: MeProps) => {
           borderRadius: 4,
         }}
         onPress={() => {
-          props.navigation.navigate(StackScreens.Login);
+          if (!appStore.authToken) {
+            props.navigation.navigate(StackScreens.Login);
+          } else {
+            UserApi.userDetail({ vmid: appStore.authToken.mid });
+          }
         }}>
         <Text style={{ color: colors.white }}>{'signin'}</Text>
       </TouchableNative>
@@ -24,4 +30,9 @@ export default observer((props: MeProps) => {
   );
 });
 
+export class Me extends BaseComponent {
+  render() {
+    return <></>;
+  }
+}
 //const styles = StyleSheet.create({});

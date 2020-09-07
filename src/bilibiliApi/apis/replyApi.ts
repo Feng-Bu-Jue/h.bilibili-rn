@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseService, GET, Response, POST, Queries } from 'ts-retrofit';
-import { QueryMapW, ApiDescriptor } from '../extensions';
+import { QueryMapW, ApiDescriptor, Authorize } from '../extensions';
 import { BiliBiliProtocol, ReplyResult, AddReplyResult } from '../typings';
 
 @ApiDescriptor('api')
 export class ReplyService extends BaseService {
+  @Authorize()
   @GET('x/v2/reply')
   async getReplies(
     @QueryMapW()
@@ -18,6 +19,7 @@ export class ReplyService extends BaseService {
     return <Response<BiliBiliProtocol<ReplyResult>>>{};
   }
 
+  @Authorize()
   @POST('x/v2/reply/add')
   async addReply(
     @QueryMapW()
