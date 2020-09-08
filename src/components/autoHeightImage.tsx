@@ -7,7 +7,7 @@ import {
   LayoutChangeEvent,
   ImageURISource,
 } from 'react-native';
-import { observable, runInAction, when } from 'mobx';
+import { observable, runInAction, when, reaction } from 'mobx';
 import BaseComponent from './baseComponent';
 
 type Size = { height: number; width: number };
@@ -41,6 +41,7 @@ const loadImage = function (source: any): Promise<Size> {
         } catch (newError) {
           reject(error);
         }
+        console.log(error);
       },
     );
   });
@@ -60,19 +61,30 @@ const AutoHeightImageHOC = function <P extends object>(
     class extends BaseComponent<BaseProps & ImageProps> {
       constructor(props: BaseProps & ImageProps) {
         super(props);
-        const { imageSize, width } = this.props;
-        if (width) {
-          this.store.containerWidth = width;
-        }
-        const loadImageTask = imageSize
-          ? Promise.resolve(imageSize)
-          : loadImage(props.source);
 
-        loadImageTask.then((size: Size) => {
-          runInAction(() => {
-            this.store.imageSize = size;
-          });
-        });
+        this.$reactionDisposers.push(
+          reaction(
+            () => this.props.source,
+            () => {
+              if ((this.props.source as any).uri) {
+                const { imageSize, width } = this.props;
+                if (width) {
+                  this.store.containerWidth = width;
+                }
+                const loadImageTask = imageSize
+                  ? Promise.resolve(imageSize)
+                  : loadImage(this.props.source);
+
+                loadImageTask.then((size: Size) => {
+                  runInAction(() => {
+                    this.store.imageSize = size;
+                  });
+                });
+              }
+            },
+            { fireImmediately: true },
+          ),
+        );
 
         this.$reactionDisposers.push(
           when(
@@ -116,7 +128,6 @@ const AutoHeightImageHOC = function <P extends object>(
       render(): React.ReactNode {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { style, height, width, ...rest } = this.props;
-
         return (
           <View onLayout={this.onLayout}>
             {this.store.layoutSize && (

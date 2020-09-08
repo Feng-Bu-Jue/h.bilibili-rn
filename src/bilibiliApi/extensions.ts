@@ -28,20 +28,20 @@ export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
     target.prototype.__meta__.ApiDescriptor = descriptor;
   };
 };
-export const Authorize = () => {
+export const WebAuthorize = () => {
   return (target: any, methodName: string) => {
     if (!target.__meta__[methodName]) {
       target.__meta__[methodName] = {};
     }
-    target.__meta__[methodName].Authorize = true;
+    target.__meta__[methodName].WebAuthorize = true;
   };
 };
-export const FixedParms = () => {
+export const AppAuthorize = () => {
   return (target: any, methodName: string) => {
     if (!target.__meta__[methodName]) {
       target.__meta__[methodName] = {};
     }
-    target.__meta__[methodName].FixedParms = true;
+    target.__meta__[methodName].AppAuthorize = true;
   };
 };
 //TODO 先wrap下 不清楚为啥不支持直接使用parameter decorator, 马萨卡 要去看babel的实现...
@@ -64,8 +64,7 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
   return builder
     .setStandalone(true)
     .setRequestInterceptors((config) => {
-      config.headers['User-Agent'] =
-        'Mozilla/5.0 BiliDroid/5.44.2 (bbcallen@gmail.com)';
+      config.headers['User-Agent'] = 'Mozilla/5.0 BiliDroid/5.44.2';
       config.headers.Referer = 'https://www.bilibili.com/';
       config.headers.Cookie = appStore.cookies;
       return config;
@@ -81,8 +80,9 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
         next: () => Promise<Response>,
       ): Promise<Response> {
         const { meta, methodName } = methodContext;
-        // handling authorize required
-        if (meta[methodName]?.Authorize) {
+
+        // handling WebAuthorize
+        if (meta[methodName]?.WebAuthorize) {
           if (appStore.authCookie) {
             const { method } = config;
             const csrf_token = appStore.authCookie.cookies.find(
@@ -91,43 +91,53 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
             if (method === 'GET') {
               config.params.csrf_token = csrf_token;
             } else {
-              config.data.csrf_token = csrf_token;
+              config.data += '&csrf_token=' + csrf_token; // 和下面的情况一样 TODO
             }
           }
         }
 
-        // handling fixedParams
-        if (meta[methodName]?.FixedParms) {
+        // handling AppAuthorize
+        if (meta[methodName]?.AppAuthorize) {
           const { method } = config;
           const fixedParams = {
-            access_key: appStore.authToken?.access_token,
             appkey: apiConfig.appkey,
             build: 5520400,
             mobi_app: 'android',
             platform: 'android',
             ts: Date.now().toString().substr(0, 10),
           } as any;
+          if (appStore.authToken?.access_token) {
+            fixedParams.access_key = appStore.authToken?.access_token;
+          }
           let params: any;
           if (method === 'GET') {
             params = Object.assign(config.params, fixedParams);
           } else {
-            params = Object.assign(config.data, fixedParams);
+            params = Object.assign({}, fixedParams, ...methodContext.args);
           }
           params.sign = SignHelper.md5Sign(params, (signString) =>
             signString.concat(apiConfig.appSecret),
           );
+          // 还需要对ts-retrofit进行较大改造,
+          // config.data 要在所有filter 执行完成后再 构建 (需要一个 requestBuilder 类 在context中可以访问)
+          // todo contenttype dataresolver
+          if (method !== 'GET') {
+            config.data = Object.entries(params)
+              .map(([k, v]) => `${k}=${encodeURIComponent(v as any)}`)
+              .join('&');
+          }
         }
+
         return next();
       },
     })
     .build(service);
 };
 
+// 以下代码 放弃中...
+// !!! 写个泛型可把我累死了
 /*
-以下代码 放弃中...
-!!! 写个泛型可把我累死了
-*/
-/* const RegisteredServices = {
+const RegisteredServices = {
   ['LinkDrawApi']: LinkDrawService,
 };
 
@@ -148,4 +158,5 @@ const BuildToExports = <
   return exportsObject;
 };
 
-export default BuildToExports(RegisteredServices); */
+export default BuildToExports(RegisteredServices);
+*/

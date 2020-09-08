@@ -3,29 +3,30 @@ import {
   BaseService,
   Response,
   POST,
-  ActionFilter,
-  Filter,
   BasePath,
   FormUrlEncoded,
-  Field,
   GET,
   Query,
 } from 'ts-retrofit';
-import { ApiEndponits, FieldMapW, QueryMapW, FixedParms } from '../extensions';
+import {
+  ApiEndponits,
+  FieldMapW,
+  QueryMapW,
+  AppAuthorize,
+} from '../extensions';
 import {
   BiliBiliProtocol,
   RSAPublicKeyResult,
   AuthResult,
   SSOResult,
 } from '../typings';
-import { SignHelper } from '../util';
 import { apiConfig } from '../contact';
 
 @BasePath('')
 export class AuthService extends BaseService {
   @POST(`${ApiEndponits.passport}api/v3/oauth2/login`)
   @FormUrlEncoded
-  @FixedParms()
+  @AppAuthorize()
   async login(
     @FieldMapW()
     query: any,

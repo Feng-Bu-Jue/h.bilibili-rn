@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { observer } from 'mobx-react';
 import {
@@ -22,6 +21,7 @@ import {
   NativeScrollEvent,
   Animated,
   LayoutRectangle,
+  StyleSheet,
 } from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
@@ -29,105 +29,9 @@ import { layout, colors } from '~/constants';
 import { DrawListProps } from '~/typings/navigation';
 import { StackScreens } from '~/typings/screens';
 import { LinkDrawApi } from '~/bilibiliApi';
-import { TabView } from 'react-native-tab-view';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import TabBar from '~/components/tabView/tabBar';
-import TabBarItem from '~/components/tabView/tabBarItem';
 import { Option } from '~/components/dropdownMenu';
 import { appStore } from '~/stores/appStore';
-
-export function DrawListTabView(props: DrawListProps) {
-  const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState([
-    { key: 'first', title: 'Draw' },
-    { key: 'second', title: 'Photo' },
-  ]);
-
-  const renderScene = ({
-    route,
-  }: {
-    route: {
-      key: string;
-      title: string;
-    };
-  }) => {
-    switch (route.key) {
-      case 'first':
-        return <DrawList pageType={'draw'} {...props} />;
-      case 'second':
-        return <DrawList pageType={'photo'} {...props} />;
-      default:
-        return null;
-    }
-  };
-
-  const insets = useSafeAreaInsets();
-  return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      lazy={true}
-      onIndexChange={setIndex}
-      renderTabBar={(tabBarProps) => {
-        return (
-          <View
-            style={[
-              {
-                alignItems: 'center',
-                backgroundColor: colors.white,
-                paddingTop: insets.top,
-                paddingBottom: 10,
-                /*
-                elevation: 4,
-                shadowColor: colors.black,
-                shadowOpacity: 0.1,
-                shadowRadius: StyleSheet.hairlineWidth,
-                shadowOffset: {
-                  height: StyleSheet.hairlineWidth,
-                  width: 0,
-                },
-                */
-              },
-            ]}>
-            <TabBar
-              {...tabBarProps}
-              activeColor={colors.pink}
-              inactiveColor={'rgb(70,70,70)'}
-              tabStyle={{ width: 'auto' }}
-              style={{
-                flex: 0,
-                height: 50,
-                elevation: 0,
-                shadowColor: undefined,
-                shadowOpacity: 0,
-                shadowRadius: 0,
-                shadowOffset: {
-                  height: 0,
-                  width: 0,
-                },
-                backgroundColor: colors.white,
-              }}
-              contentContainerStyle={{ flex: 0 }}
-              indicatorStyle={{ backgroundColor: colors.pink, height: 3 }}
-              renderTabBarItem={(itemProps) => {
-                return (
-                  <TabBarItem
-                    {...itemProps}
-                    containerStyle={{ flex: 1 }}
-                    labelStyle={{
-                      width: 50,
-                      textAlign: 'center',
-                    }}
-                  />
-                );
-              }}
-            />
-          </View>
-        );
-      }}
-    />
-  );
-}
+import { downloadFile } from '~/utils/download';
 
 type Props = {
   pageType: 'draw' | 'photo';
@@ -139,6 +43,7 @@ export default class DrawList extends BaseComponent<Props> {
   pageSize = 20;
   columnCount = 2;
   columnGap = 8;
+  cardContentHeight = 100;
 
   lastRecordedOffetY = 0;
   menuTranslateY = new Animated.Value(0);
@@ -248,7 +153,7 @@ export default class DrawList extends BaseComponent<Props> {
                 item.item.pictures[0].img_height /
                 item.item.pictures[0].img_width;
               return {
-                size: ratio * columnWidth + 100,
+                size: ratio * columnWidth + this.cardContentHeight,
                 item: item,
               };
             });
@@ -350,25 +255,21 @@ export default class DrawList extends BaseComponent<Props> {
             columnWidth: number,
           ) => {
             return (
-              <View
-                style={[
-                  layout.margin(10, 0),
-                  {
-                    backgroundColor: colors.white,
-                    borderRadius: 5,
-                    overflow: 'hidden',
-                  },
-                ]}>
+              <View style={[styles.cardItem]}>
                 <TouchableNative
                   onPress={() => {
                     this.props.navigation.push(StackScreens.DrawDetail, {
                       docId: item.item.doc_id,
                     });
                   }}>
-                  <View style={{ height: size - 100, width: columnWidth }}>
+                  <View
+                    style={{
+                      height: size - this.cardContentHeight,
+                      width: columnWidth,
+                    }}>
                     <Image
                       style={{
-                        height: size - 100,
+                        height: size - this.cardContentHeight,
                         width: columnWidth,
                       }}
                       source={{
@@ -378,35 +279,40 @@ export default class DrawList extends BaseComponent<Props> {
                       resizeMode={'contain'}
                     />
                   </View>
-                  <View style={{ height: 90, ...layout.padding(8) }}>
-                    <Text
-                      numberOfLines={1}
-                      style={{ fontSize: 14, color: colors.black }}>
+                  <View
+                    // eslint-disable-next-line react-native/no-inline-styles
+                    style={{ height: 90, ...layout.padding(8) }}>
+                    <Text numberOfLines={1} style={styles.itemTitle}>
                       {item.item.title}
                     </Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        padding: 5,
-                      }}>
+                    <View style={styles.posterInfoBox}>
                       <Image
-                        style={{
-                          height: 24,
-                          width: 24,
-                          marginRight: 10,
-                        }}
+                        style={styles.userAvatar}
+                        height={24}
+                        width={24}
                         borderRadius={12}
                         source={{
                           uri: `${item.user.head_url}@${64}w_${64}h_1e.webp`,
                         }}
                         resizeMode={'contain'}
                       />
-                      <Text
-                        numberOfLines={1}
-                        style={{ fontSize: 14, color: colors.charcoal }}>
+                      <Text numberOfLines={1} style={styles.usernameText}>
                         {item.user.name}
                       </Text>
+                    </View>
+                    <View
+                      // eslint-disable-next-line react-native/no-inline-styles
+                      style={{ flexDirection: 'row' }}>
+                      <TouchableNative
+                        style={styles.itemAction}
+                        onPress={() => {
+                          downloadFile(item.item.pictures[0].img_src);
+                        }}>
+                        <Text style={{ color: colors.pink }}>{'Save'}</Text>
+                      </TouchableNative>
+                      <TouchableNative style={styles.itemAction}>
+                        <Text style={{ color: colors.pink }}>{'Like'}</Text>
+                      </TouchableNative>
                     </View>
                   </View>
                 </TouchableNative>
@@ -421,22 +327,11 @@ export default class DrawList extends BaseComponent<Props> {
           onScrollEndDrag={(e) => {
             this.lastRecordedOffetY = e.nativeEvent.contentOffset.y;
           }}
-          onTouchMove={(e) => {
-            console.log(e.nativeEvent.pageY);
-          }}
           refreshControlProps={{ colors: [colors.pink] }}
           onInfinite={(columnWidth) => this.fetchDrawItems(columnWidth)}
         />
         <Portal>
-          <View
-            style={{
-              position: 'absolute',
-              elevation: 4,
-              right: 20,
-              bottom: 40,
-              borderRadius: 20,
-              overflow: 'hidden',
-            }}>
+          <View style={styles.arrowUpWrapBox}>
             <TouchableNative
               onPress={() => {
                 this.waterfallRef?.scrollTo({
@@ -444,13 +339,7 @@ export default class DrawList extends BaseComponent<Props> {
                   animated: true,
                 });
               }}
-              style={{
-                height: 40,
-                width: 40,
-                backgroundColor: colors.white,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
+              style={styles.arrowUpBox}>
               <View>
                 <IconArrowUp size={30} />
               </View>
@@ -461,3 +350,52 @@ export default class DrawList extends BaseComponent<Props> {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  cardItem: {
+    ...layout.margin(10, 0),
+    backgroundColor: colors.white,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  itemTitle: {
+    fontSize: 14,
+    color: colors.black,
+  },
+  posterInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+  },
+  usernameText: {
+    fontSize: 14,
+    color: colors.charcoal,
+  },
+  userAvatar: {
+    height: 24,
+    width: 24,
+    marginRight: 10,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  itemAction: {
+    flex: 1,
+    alignItems: 'center',
+    ...layout.padding(3, 0),
+  },
+  arrowUpWrapBox: {
+    position: 'absolute',
+    elevation: 4,
+    right: 20,
+    bottom: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  arrowUpBox: {
+    height: 40,
+    width: 40,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

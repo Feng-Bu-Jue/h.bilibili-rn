@@ -6,12 +6,12 @@ import IconPicfill from '~/assets/iconfont/IconPicfill';
 import IconPeople from '~/assets/iconfont/IconPeople';
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs/lib/typescript/src/types';
 import { TouchableNative, BottomTabBar } from '~/components';
-import { DrawListTabView } from '~/screens/draw/list';
 import Me from '~/screens/account/me';
 import { StyleSheet } from 'react-native';
 import { computed } from 'mobx';
 import { appStore } from '~/stores/appStore';
 import { observer } from 'mobx-react-lite';
+import { DrawListTabView } from '~/screens/draw/drawlistTabView';
 
 const Tab = createBottomTabNavigator();
 

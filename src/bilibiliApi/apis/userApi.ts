@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BaseService, GET, Response, POST, Queries } from 'ts-retrofit';
-import { QueryMapW, ApiDescriptor, Authorize, FixedParms } from '../extensions';
-import { BiliBiliProtocol } from '../typings';
+import { BaseService, GET, Response } from 'ts-retrofit';
+import { QueryMapW, ApiDescriptor, AppAuthorize } from '../extensions';
+import { BiliBiliProtocol, UserSpaceDetail } from '../typings';
 
 @ApiDescriptor('app')
 export class UserService extends BaseService {
-  @FixedParms()
+  @AppAuthorize()
   @GET('x/v2/space')
-  async userDetail(
+  async getUserDetail(
     @QueryMapW()
     query: {
       vmid: number;
     },
-  ): Promise<Response<BiliBiliProtocol<any>>> {
-    return <Response<BiliBiliProtocol<any>>>{};
+  ): Promise<Response<BiliBiliProtocol<UserSpaceDetail>>> {
+    return <Response<BiliBiliProtocol<UserSpaceDetail>>>{};
   }
 }

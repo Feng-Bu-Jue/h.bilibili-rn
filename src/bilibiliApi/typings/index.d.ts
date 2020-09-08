@@ -1,6 +1,12 @@
 export type DrawCategory = 'all' | 'illustration' | 'comic' | 'draw';
 export type PhotoCategory = 'all' | 'sifu' | 'cos';
 export type ListType = 'hot' | 'new';
+export enum Enum_Biz {
+  all = 0,
+  draw = 1,
+  photo = 2,
+  daily = 3,
+}
 
 export interface BiliBiliProtocol<T> {
   public code: number;

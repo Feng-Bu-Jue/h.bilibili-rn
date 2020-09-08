@@ -8,6 +8,7 @@ export const colors = {
   black: '#111111',
   black70: 'rgba(0,0,0,0.7)',
   black40: 'rgba(0,0,0,0.4)',
+  bgy: '#3e3e3e',
   whitesmoke: '#F4F4F4',
   white: '#FFFFFF',
   charcoal: 'rgb(70,70,70)',

@@ -6,8 +6,7 @@ import { colors, layout } from '~/constants';
 import { Panel, TouchableNative } from '~/components';
 import { useLocalStore, observer } from 'mobx-react';
 import { runInAction } from 'mobx';
-import { AuthApi, UserApi } from '~/bilibiliApi';
-// @ts-ignore
+import { AuthApi } from '~/bilibiliApi';
 import { JSEncrypt } from 'jsencrypt';
 import { LoginProps } from '~/typings/navigation';
 import { appStore } from '~/stores/appStore';
@@ -28,11 +27,13 @@ const Login = observer((props: LoginProps) => {
       // 1. encrypt password
       const {
         data: { hash, key },
-      } = await AuthApi.getEncryptKey();
+      } = await AuthApi.getEncryptKey({
+        act: 'getkey',
+        _: Date.now().toString().substr(0, 10),
+      });
       let encrypt = new JSEncrypt();
       encrypt.setPublicKey(key);
       let encryptedPassword = encrypt.encrypt(hash.concat(password));
-
       // 2. get access token
       const {
         data: { data: authResult },
@@ -42,16 +43,8 @@ const Login = observer((props: LoginProps) => {
         gee_type: 10,
       });
       // 3. stored cookie
-      /*
-      const {
-        data: {
-          data: { cookie },
-        },
-      } = await AuthApi.freshSSO(authResult.token_info.access_token);
-      */
       await AuthApi.SSO(authResult.token_info.access_token);
       await appStore.saveAuthResult(authResult);
-      await UserApi.userDetail({ vmid: appStore.authToken!.mid });
       props.navigation.goBack();
     } catch (e) {
       console.log(e);

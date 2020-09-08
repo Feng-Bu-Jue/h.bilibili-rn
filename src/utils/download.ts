@@ -1,5 +1,6 @@
 import RNFS from 'react-native-fs';
-import { Platform, CameraRoll } from 'react-native';
+import { Platform } from 'react-native';
+import CameraRoll from '@react-native-community/cameraroll';
 
 const resolveFileName = (targetUrl: string): string => {
   var regexResult = /[\w]+\.((webp)|(jpg)|(png))/.exec(targetUrl);
@@ -33,12 +34,12 @@ export const downloadFile = (url: string) => {
     ret.promise
       .then((res) => {
         console.log(res);
-        CameraRoll.saveToCameraRoll(downloadDest)
+        CameraRoll.save(downloadDest)
           .then(() => {
             console.log('r-h-s');
           })
-          .catch(() => {
-            console.log('r-h-f');
+          .catch((error) => {
+            console.log(error);
           });
       })
       .catch((err) => {

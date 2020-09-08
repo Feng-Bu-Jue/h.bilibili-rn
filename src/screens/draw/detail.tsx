@@ -1,17 +1,22 @@
 import React from 'react';
 import { observer } from 'mobx-react';
-import { View, Animated, Text, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Animated,
+  Text,
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableWithoutFeedback,
+  ScrollView,
+} from 'react-native';
 import { DrawDetailProps } from '~/typings/navigation';
 import { observable, runInAction, computed } from 'mobx';
 import { LinkDrawResult, Reply, ReplyResult } from '~/bilibiliApi/typings';
 import { BaseComponentWithAnimatedHeader } from '~/components/baseComponent';
 import { AutoHeightImageHOC, Panel, TouchableNative } from '~/components';
 import { colors, layout, sizes } from '~/constants';
-import {
-  FlatList,
-  TouchableWithoutFeedback,
-  ScrollView,
-} from 'react-native-gesture-handler';
 import ImageView from 'react-native-image-viewing';
 import IconMultiple from '~/assets/iconfont/IconMultiple';
 import { LinkDrawApi, ReplyApi } from '~/bilibiliApi';
@@ -147,7 +152,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
           />
           <TouchableWithoutFeedback
             onPress={() => runInAction(() => (this.imageViewerVisible = true))}>
-            <View style={{ position: 'relative' }}>
+            <View>
               <AutoHeightImage
                 width={sizes.screenWidth}
                 imageSize={{
@@ -161,6 +166,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
               />
               {this.detail.item.pictures.length > 1 && (
                 <IconMultiple
+                  // eslint-disable-next-line react-native/no-inline-styles
                   style={{
                     right: 15,
                     top: 50,
@@ -174,43 +180,28 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
           </TouchableWithoutFeedback>
           <Panel style={layout.padding(20, 15)}>
             <View
+              // eslint-disable-next-line react-native/no-inline-styles
               style={{
                 flexDirection: 'row',
               }}>
               <Image
-                style={{
-                  height: 40,
-                  width: 40,
-                  backgroundColor: colors.lightgray,
-                }}
+                style={styles.userAvatar}
                 borderRadius={20}
                 source={{
                   uri: this.detail.user.head_url,
                 }}
               />
-              <View
-                style={{
-                  marginLeft: 15,
-                  justifyContent: 'space-between',
-                }}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    color: colors.pink,
-                  }}>
-                  {this.detail.user.name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: colors.gray,
-                  }}>
+              <View style={styles.userInfoBox}>
+                <Text style={styles.usernameText}>{this.detail.user.name}</Text>
+                <Text style={styles.postUpTime}>
                   {this.detail.item.upload_time}
                 </Text>
               </View>
             </View>
-            <Text selectable style={{ marginTop: 15 }}>
+            <Text
+              selectable
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{ marginTop: 15 }}>
               {this.detail.item.title}
             </Text>
             {!!this.detail.item.description && (
@@ -218,12 +209,7 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
             )}
           </Panel>
           {!!this.detail.item?.tags?.length && (
-            <Panel
-              style={{
-                ...layout.padding(15, 0),
-                ...layout.border([1, 0, 0, 0], colors.lightgray),
-                flexDirection: 'row',
-              }}>
+            <Panel style={styles.tagsBox}>
               <ScrollView
                 horizontal={true}
                 showsHorizontalScrollIndicator={false}>
@@ -231,17 +217,12 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                   return (
                     <Text
                       key={`${x.tag}-${i}`}
-                      style={{
-                        ...layout.padding(5),
-                        ...layout.margin(0, 10, 0, 0),
-                        ...(i === 0 ? { marginLeft: 10 } : {}),
-                        flexWrap: 'wrap',
-                        flex: 0,
-                        alignItems: 'center',
-                        borderRadius: 5,
-                        color: colors.gray,
-                        backgroundColor: colors.whitesmoke,
-                      }}>
+                      style={[
+                        {
+                          ...(i === 0 ? { marginLeft: 10 } : {}),
+                        },
+                        styles.tagText,
+                      ]}>
                       {x.text}
                     </Text>
                   );
@@ -250,20 +231,16 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
             </Panel>
           )}
           <Panel style={[layout.margin(10, 0, 0, 0)]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                ...layout.padding(15),
-                ...layout.border([0, 0, 0.5, 0], colors.lightgray),
-              }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
+            <View style={styles.commentHeader}>
+              <Text style={styles.commentTitleText}>
                 {'Comment' +
                   (this.replyResult?.page?.count
                     ? `(${this.replyResult?.page.count})`
                     : '')}
               </Text>
-              <View style={{ flexDirection: 'row' }}>
+              <View
+                // eslint-disable-next-line react-native/no-inline-styles
+                style={{ flexDirection: 'row' }}>
                 {Object.entries(sortType).map(([name, code], i) => {
                   return (
                     <TouchableWithoutFeedback
@@ -276,10 +253,13 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
                       }}>
                       <Text
                         style={[
+                          // eslint-disable-next-line react-native/no-inline-styles
                           { fontSize: 14 },
+                          // eslint-disable-next-line react-native/no-inline-styles
                           i ? { marginLeft: 15 } : {},
                           this.selectedSortCode === code
-                            ? { fontWeight: 'bold' }
+                            ? // eslint-disable-next-line react-native/no-inline-styles
+                              { fontWeight: 'bold' }
                             : {},
                         ]}>
                         {name}
@@ -297,23 +277,17 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
         <>
           {this.noMoreOfReply ? (
             <Panel>
-              <Text
-                style={{
-                  ...layout.padding(20, 15),
-                  textAlign: 'center',
-                  color: colors.nobel,
-                }}>
-                {'No more replies'}
-              </Text>
+              <Text style={styles.replyNoMore}>{'No more replies'}</Text>
             </Panel>
           ) : (
             <Panel
               style={[
-                layout.padding(15),
-                { flexDirection: 'row', justifyContent: 'center' },
+                styles.replyLoadingBox,
+                // eslint-disable-next-line react-native/no-inline-styles
                 this.replyLoading ? { opacity: 1 } : { opacity: 0 },
               ]}>
               <ActivityIndicator
+                // eslint-disable-next-line react-native/no-inline-styles
                 style={{ marginRight: 10 }}
                 size="small"
                 color="black"
@@ -357,64 +331,28 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
             renderItem={({ item }) => {
               return (
                 <TouchableNative
-                  style={{
-                    backgroundColor: colors.white,
-                    flexDirection: 'row',
-                    ...layout.padding(15),
-                    ...layout.border([0, 0, 0.5, 0], colors.lightgray),
-                  }}
+                  style={styles.replyItem}
                   onPress={() => console.log('board')}>
                   <Image
-                    style={{
-                      height: 40,
-                      width: 40,
-                      backgroundColor: colors.lightgray,
-                    }}
+                    style={styles.replyAvatar}
                     borderRadius={20}
                     source={{
                       uri: `${item.member.avatar}`,
                     }}
                     resizeMode={'cover'}
                   />
-                  <View
-                    style={{
-                      marginLeft: 15,
-                      justifyContent: 'flex-start',
-                      flex: 1,
-                    }}>
-                    <Text
-                      selectable
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        color: colors.gray,
-                      }}>
+                  <View style={styles.replyItemContentBox}>
+                    <Text selectable style={styles.replyUsername}>
                       {item.member.uname}
                     </Text>
-                    <Text
-                      style={{
-                        marginTop: 5,
-                        fontSize: 12,
-                        color: colors.gray,
-                      }}>
+                    <Text style={styles.replyTime}>
                       {new Date(item.ctime * 1000).toLocaleString()}
                     </Text>
-                    <Text
-                      selectable
-                      style={{
-                        fontSize: 14,
-                        marginTop: 15,
-                      }}>
+                    <Text selectable style={styles.replyMessage}>
                       {item.content.message}
                     </Text>
                     {!!item.replies?.length && (
-                      <View
-                        style={{
-                          marginTop: 10,
-                          ...layout.padding(10),
-                          borderRadius: 3,
-                          backgroundColor: colors.whitesmoke,
-                        }}>
+                      <View style={styles.subReplyBox}>
                         {item.replies.map((r) => {
                           return (
                             <TouchableNative
@@ -446,3 +384,92 @@ export default class DrawDetail extends BaseComponentWithAnimatedHeader<
     return <></>;
   }
 }
+
+const styles = StyleSheet.create({
+  userAvatar: {
+    height: 40,
+    width: 40,
+    backgroundColor: colors.lightgray,
+  },
+  userInfoBox: {
+    marginLeft: 15,
+    justifyContent: 'space-between',
+  },
+  usernameText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.pink,
+  },
+  postUpTime: {
+    fontSize: 14,
+    color: colors.gray,
+  },
+  tagsBox: {
+    ...layout.padding(15, 0),
+    ...layout.border([1, 0, 0, 0], colors.lightgray),
+    flexDirection: 'row',
+  },
+  tagText: {
+    ...layout.padding(5),
+    ...layout.margin(0, 10, 0, 0),
+    flexWrap: 'wrap',
+    flex: 0,
+    alignItems: 'center',
+    borderRadius: 5,
+    color: colors.gray,
+    backgroundColor: colors.whitesmoke,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    ...layout.padding(15),
+    ...layout.border([0, 0, 0.5, 0], colors.lightgray),
+  },
+  commentTitleText: { fontSize: 14, fontWeight: 'bold' },
+  replyNoMore: {
+    ...layout.padding(20, 15),
+    textAlign: 'center',
+    color: colors.nobel,
+  },
+  replyLoadingBox: {
+    ...layout.padding(15),
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  replyItem: {
+    backgroundColor: colors.white,
+    flexDirection: 'row',
+    ...layout.padding(15),
+    ...layout.border([0, 0, 0.5, 0], colors.lightgray),
+  },
+  replyAvatar: {
+    height: 40,
+    width: 40,
+    backgroundColor: colors.lightgray,
+  },
+  replyItemContentBox: {
+    marginLeft: 15,
+    justifyContent: 'flex-start',
+    flex: 1,
+  },
+  replyUsername: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.gray,
+  },
+  replyTime: {
+    marginTop: 5,
+    fontSize: 12,
+    color: colors.gray,
+  },
+  replyMessage: {
+    fontSize: 14,
+    marginTop: 15,
+  },
+  subReplyBox: {
+    marginTop: 10,
+    ...layout.padding(10),
+    borderRadius: 3,
+    backgroundColor: colors.whitesmoke,
+  },
+});

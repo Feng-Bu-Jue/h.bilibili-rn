@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BaseService, GET, Response, POST, Queries } from 'ts-retrofit';
-import { QueryMapW, ApiDescriptor, Authorize } from '../extensions';
+import { BaseService, GET, Response, POST } from 'ts-retrofit';
+import {
+  QueryMapW,
+  ApiDescriptor,
+  WebAuthorize,
+  FieldMapW,
+} from '../extensions';
 import { BiliBiliProtocol, ReplyResult, AddReplyResult } from '../typings';
 
 @ApiDescriptor('api')
 export class ReplyService extends BaseService {
-  @Authorize()
+  @WebAuthorize()
   @GET('x/v2/reply')
   async getReplies(
     @QueryMapW()
@@ -19,14 +24,30 @@ export class ReplyService extends BaseService {
     return <Response<BiliBiliProtocol<ReplyResult>>>{};
   }
 
-  @Authorize()
+  @WebAuthorize()
   @POST('x/v2/reply/add')
   async addReply(
-    @QueryMapW()
-    query: {
-      todo: string;
+    @FieldMapW()
+    fields: {
+      oid: number;
+      message: string;
+      root: number;
+      parent: number;
     },
   ): Promise<Response<BiliBiliProtocol<AddReplyResult>>> {
     return <Response<BiliBiliProtocol<AddReplyResult>>>{};
+  }
+
+  @WebAuthorize()
+  @POST('x/v2/reply/action')
+  async action(
+    @FieldMapW()
+    fields: {
+      oid: number;
+      rpid: number;
+      action: number;
+    },
+  ): Promise<Response<BiliBiliProtocol<void>>> {
+    return <Response<BiliBiliProtocol<void>>>{};
   }
 }
