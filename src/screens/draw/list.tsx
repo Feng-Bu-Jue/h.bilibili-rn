@@ -22,6 +22,7 @@ import {
   Animated,
   LayoutRectangle,
   StyleSheet,
+  PermissionsAndroid,
 } from 'react-native';
 import { Response } from 'ts-retrofit';
 import IconArrowUp from '~/assets/iconfont/IconArrowUp';
@@ -36,6 +37,36 @@ import { downloadFile } from '~/utils/download';
 type Props = {
   pageType: 'draw' | 'photo';
 } & DrawListProps;
+
+const requestCameraPermission = async () => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can use the camera');
+    } else {
+      console.log('Camera permission denied');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+};
+
+const requestCameraPermissionWrite = async () => {
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can write to storage');
+    } else {
+      console.log('Camera permission denied');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+};
 
 @observer
 export default class DrawList extends BaseComponent<Props> {
@@ -110,6 +141,12 @@ export default class DrawList extends BaseComponent<Props> {
         { text: 'cos', value: 'cos' },
       ];
     }
+  }
+
+  getVoteStatus(doc_id: number) {
+    return this.drawItems.find(
+      (x) => x.item.item.doc_id === doc_id && x.item.item.already_voted === 0,
+    );
   }
 
   async fetchDrawItems(columnWidth: number, reload: boolean = false) {
@@ -305,7 +342,9 @@ export default class DrawList extends BaseComponent<Props> {
                       style={{ flexDirection: 'row' }}>
                       <TouchableNative
                         style={styles.itemAction}
-                        onPress={() => {
+                        onPress={async () => {
+                          await requestCameraPermission();
+                          await requestCameraPermissionWrite();
                           downloadFile(item.item.pictures[0].img_src);
                         }}>
                         <Text style={{ color: colors.pink }}>{'Save'}</Text>
