@@ -1,39 +1,33 @@
 export type DrawCategory = 'all' | 'illustration' | 'comic' | 'draw';
 export type PhotoCategory = 'all' | 'sifu' | 'cos';
 export type ListType = 'hot' | 'new';
-export enum Enum_Biz {
-  all = 0,
-  draw = 1,
-  photo = 2,
-  daily = 3,
-}
 
 export interface BiliBiliProtocol<T> {
-  public code: number;
-  public message: string;
-  public msg: string;
-  public data: T;
+  code: number;
+  message: string;
+  msg: string;
+  data: T;
 }
 
 export interface Picture {
-  public img_height: number;
-  public img_size: number;
-  public img_width: number;
-  public img_src: string;
+  img_height: number;
+  img_size: number;
+  img_width: number;
+  img_src: string;
 }
 
 export interface LinkDrawItem {
-  public already_liked: number;
-  public already_voted: number;
-  public category: string;
-  public doc_id: number;
-  public poster_uid: number;
-  public title: string;
-  public description: string;
-  public upload_time: number;
-  public upload_timestamp: number;
-  public view_count: number;
-  public pictures: Array<Picture>;
+  already_liked: number;
+  already_voted: number;
+  category: string;
+  doc_id: number;
+  poster_uid: number;
+  title: string;
+  description: string;
+  upload_time: number;
+  upload_timestamp: number;
+  view_count: number;
+  pictures: Array<Picture>;
   tags: Tag[];
 }
 
@@ -46,70 +40,70 @@ export interface Tag {
 }
 
 export interface LinkDrawUesr {
-  public head_url: string;
-  public name: string;
-  public uid: number;
+  head_url: string;
+  name: string;
+  uid: number;
 }
 
 export interface LinkDrawResult {
-  public item: LinkDrawItem;
-  public user: LinkDrawUesr;
+  item: LinkDrawItem;
+  user: LinkDrawUesr;
 }
 
 export interface LinkDrawResultList {
-  public total_count: number;
-  public items: LinkDrawResult[];
+  total_count: number;
+  items: LinkDrawResult[];
 }
 
 /* v1 */
 export interface LinkDrawResultV1 {
-  public count: number;
-  public ctime: number;
-  public description: number;
-  public doc_id: number;
-  public like: number;
-  public pictures: number;
-  public poster_uid: number;
-  public title: number;
-  public view: number;
+  count: number;
+  ctime: number;
+  description: number;
+  doc_id: number;
+  like: number;
+  pictures: number;
+  poster_uid: number;
+  title: number;
+  view: number;
 }
 
 export interface LinkDrawResultV1List {
-  public items: Array<LinkDrawResultV1>;
+  items: Array<LinkDrawResultV1>;
 }
 
 export interface ReplyResult {
-  public blacklist: number;
-  public page: ReplyPage;
-  public hots: Array<Reply>;
-  public replies: Array<Reply>;
+  blacklist: number;
+  page: ReplyPage;
+  hots: Array<Reply>;
+  replies: Array<Reply>;
 }
 
 export interface Reply {
-  public floor: string;
-  public content: ReplyContent;
-  public member: Member;
-  public ctime: number;
-  public count: number;
-  public like: number;
-  public mid: number;
-  public oid: number;
+  floor: string;
+  content: ReplyContent;
+  member: Member;
+  ctime: number;
+  count: number;
+  like: number;
+  mid: number;
+  oid: number;
   rpid: number;
-  public replies: Array<Reply>;
+  replies: Array<Reply>;
 }
 
 export interface ReplyPage {
-  public acount: number;
-  public count: number;
-  public num: number;
-  public size: number;
+  acount: number;
+  count: number;
+  num: number;
+  size: number;
 }
 
 export interface ReplyContent {
-  public device: string;
-  public members: Array<string>;
-  public message: string;
-  public plat: number; //plat 1=web? 2=android
+  device: string;
+  members: Array<string>;
+  message: string;
+  plat: number; //plat 1=web? 2=android
 }
 
 export interface AddReplyResult {
@@ -126,56 +120,57 @@ export interface AddReplyResult {
 }
 
 export interface Member {
-  public mid: string;
-  public avatar: string;
-  public uname: string;
-  public sign: string;
-  public sex: string;
-  public rank: number;
-  public level_info: MemberLevel;
-  public vip: MemberVip;
+  mid: string;
+  avatar: string;
+  uname: string;
+  sign: string;
+  sex: string;
+  rank: number;
+  level_info: MemberLevel;
+  vip: MemberVip;
 }
 
 export interface MemberLevel {
-  public current_level: number;
+  current_level: number;
 }
 export interface MemberVip {
-  public vipStatus: number;
-  public type: number;
+  vipStatus: number;
+  type: number;
 }
 
 export interface RSAPublicKeyResult {
-  public key: string;
-  public hash: string;
+  key: string;
+  hash: string;
 }
 
 export interface AuthResult {
-  public status: number;
-  public token_info: AuthToken;
-  public cookie_info: CookieInfo;
-  public sso: Array<string>;
+  status: number;
+  token_info: AuthToken;
+  cookie_info: CookieInfo;
+  sso: Array<string>;
 }
 
 export interface AuthToken {
-  public mid: number;
-  public access_token: string;
-  public refresh_token: string;
-  public expires_in: number;
+  mid: number;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
 }
 
 export interface SSOResult {
-  public cookie: string;
-  public status: string;
-  public ts: number;
+  cookie: string;
+  status: string;
+  ts: number;
 }
 
 export interface CookieInfo {
   cookies: CookieItem[];
+  domains: string[];
 }
 
 export interface CookieItem {
   expires: number;
-  http_onl: number;
+  http_only: number;
   name: string;
   value: string;
 }

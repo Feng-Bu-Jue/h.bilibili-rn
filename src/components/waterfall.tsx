@@ -174,6 +174,7 @@ export default class Waterfall<TItem = any> extends React.Component<
       if (!itemInfoData?.length) {
         this.onInitData(newColumnWidth);
       }
+      this.reset();
       this.setState({
         columnWidth: newColumnWidth,
       });
@@ -346,8 +347,9 @@ export default class Waterfall<TItem = any> extends React.Component<
         items.push(
           <View
             key={i}
+            // eslint-disable-next-line react-native/no-inline-styles
             style={{
-              ...styles.item,
+              position: 'absolute',
               top: position.offsetTop,
               left: position.offsetLeft,
               width: columnWidth,
@@ -401,9 +403,6 @@ export default class Waterfall<TItem = any> extends React.Component<
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  item: {
-    position: 'absolute',
-  },
   loadingMoreBox: {
     flexDirection: 'row',
     justifyContent: 'center',

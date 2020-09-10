@@ -74,7 +74,7 @@ export default class DrawList extends BaseComponent<Props> {
   pageSize = 20;
   columnCount = 2;
   columnGap = 8;
-  cardContentHeight = 100;
+  cardContentHeight = 70;
 
   lastRecordedOffetY = 0;
   menuTranslateY = new Animated.Value(0);
@@ -144,7 +144,7 @@ export default class DrawList extends BaseComponent<Props> {
   }
 
   getVoteStatus(doc_id: number) {
-    return this.drawItems.find(
+    return this.drawItems.some(
       (x) => x.item.item.doc_id === doc_id && x.item.item.already_voted === 0,
     );
   }
@@ -223,6 +223,27 @@ export default class DrawList extends BaseComponent<Props> {
     }
   };
 
+  onSavePress = async (url: string) => {
+    await requestCameraPermission();
+    await requestCameraPermissionWrite();
+    downloadFile(url);
+  };
+
+  onItemActionPress = async (doc_id: number, voteStatus: boolean) => {
+    const item = this.drawItems.find((x) => x.item.item.doc_id === doc_id)!.item
+      .item;
+    if (voteStatus) {
+      await LinkDrawApi.favorite({ fav_id: doc_id, biz_type: 2 });
+      await LinkDrawApi.vote({ doc_id, type: 1 });
+    } else {
+      await LinkDrawApi.unfavorite({ fav_id: doc_id, biz_type: 2 });
+      await LinkDrawApi.vote({ doc_id, type: 2 });
+    }
+    runInAction(() => {
+      item.already_voted = voteStatus ? 1 : 0;
+    });
+  };
+
   render(): React.ReactNode {
     const headerComponent = (
       <View
@@ -291,6 +312,8 @@ export default class DrawList extends BaseComponent<Props> {
             },
             columnWidth: number,
           ) => {
+            const voteStatus = this.getVoteStatus(item.item.doc_id);
+
             return (
               <View style={[styles.cardItem]}>
                 <TouchableNative
@@ -317,40 +340,31 @@ export default class DrawList extends BaseComponent<Props> {
                     />
                   </View>
                   <View
-                    // eslint-disable-next-line react-native/no-inline-styles
-                    style={{ height: 90, ...layout.padding(8) }}>
+                    style={{
+                      height: this.cardContentHeight - 10,
+                      ...layout.padding(8),
+                    }}>
                     <Text numberOfLines={1} style={styles.itemTitle}>
                       {item.item.title}
                     </Text>
-                    <View style={styles.posterInfoBox}>
-                      <Image
-                        style={styles.userAvatar}
-                        height={24}
-                        width={24}
-                        borderRadius={12}
-                        source={{
-                          uri: `${item.user.head_url}@${64}w_${64}h_1e.webp`,
-                        }}
-                        resizeMode={'contain'}
-                      />
-                      <Text numberOfLines={1} style={styles.usernameText}>
-                        {item.user.name}
-                      </Text>
-                    </View>
                     <View
                       // eslint-disable-next-line react-native/no-inline-styles
                       style={{ flexDirection: 'row' }}>
                       <TouchableNative
                         style={styles.itemAction}
-                        onPress={async () => {
-                          await requestCameraPermission();
-                          await requestCameraPermissionWrite();
-                          downloadFile(item.item.pictures[0].img_src);
-                        }}>
+                        onPress={() =>
+                          this.onSavePress(item.item.pictures[0].img_src)
+                        }>
                         <Text style={{ color: colors.pink }}>{'Save'}</Text>
                       </TouchableNative>
-                      <TouchableNative style={styles.itemAction}>
-                        <Text style={{ color: colors.pink }}>{'Like'}</Text>
+                      <TouchableNative
+                        style={styles.itemAction}
+                        onPress={() =>
+                          this.onItemActionPress(item.item.doc_id, voteStatus)
+                        }>
+                        <Text style={{ color: colors.pink }}>
+                          {voteStatus ? 'Like' : 'Unlike'}
+                        </Text>
                       </TouchableNative>
                     </View>
                   </View>
@@ -393,29 +407,13 @@ export default class DrawList extends BaseComponent<Props> {
 const styles = StyleSheet.create({
   cardItem: {
     ...layout.margin(10, 0),
-    backgroundColor: colors.white,
     borderRadius: 5,
     overflow: 'hidden',
+    backgroundColor: colors.white,
   },
   itemTitle: {
     fontSize: 14,
     color: colors.black,
-  },
-  posterInfoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 5,
-  },
-  usernameText: {
-    fontSize: 14,
-    color: colors.charcoal,
-  },
-  userAvatar: {
-    height: 24,
-    width: 24,
-    marginRight: 10,
-    borderRadius: 12,
-    overflow: 'hidden',
   },
   itemAction: {
     flex: 1,

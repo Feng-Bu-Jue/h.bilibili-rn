@@ -7,9 +7,14 @@ import {
   ListType,
   PhotoCategory,
   LinkDrawResult,
-  Enum_Biz,
 } from '../typings';
-import { QueryMapW, ApiDescriptor, WebAuthorize } from '../extensions';
+import {
+  QueryMapW,
+  ApiDescriptor,
+  WebAuthorize,
+  FieldMapW,
+} from '../extensions';
+import { Enum_Biz } from '../contact';
 
 @ApiDescriptor('apivc')
 export class LinkDrawService extends BaseService {
@@ -68,10 +73,10 @@ export class LinkDrawService extends BaseService {
   @WebAuthorize()
   @POST('user_plus/v1/Fav/add')
   async favorite(
-    @QueryMapW()
+    @FieldMapW()
     query: {
       fav_id: number;
-      biz: Enum_Biz;
+      biz_type: Enum_Biz;
     },
   ): Promise<Response<void>> {
     return <Response<void>>{};
@@ -79,11 +84,23 @@ export class LinkDrawService extends BaseService {
 
   @WebAuthorize()
   @POST('user_plus/v1/Fav/delete')
-  async unfvorite(
-    @QueryMapW()
+  async unfavorite(
+    @FieldMapW()
     query: {
       fav_id: number;
-      biz: Enum_Biz;
+      biz_type: Enum_Biz;
+    },
+  ): Promise<Response<void>> {
+    return <Response<void>>{};
+  }
+
+  @WebAuthorize()
+  @POST('link_draw/v2/Vote/operate')
+  async vote(
+    @FieldMapW()
+    query: {
+      doc_id: number;
+      type: number;
     },
   ): Promise<Response<void>> {
     return <Response<void>>{};

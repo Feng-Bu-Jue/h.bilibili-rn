@@ -63,16 +63,6 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
   }
   return builder
     .setStandalone(true)
-    .setRequestInterceptors((config) => {
-      config.headers['User-Agent'] = 'Mozilla/5.0 BiliDroid/5.44.2';
-      config.headers.Referer = 'https://www.bilibili.com/';
-      config.headers.Cookie = appStore.cookies;
-      return config;
-    })
-    .setResponseInterceptors((response) => {
-      //handling 401
-      return response;
-    })
     .setFilters({
       invoke(
         methodContext: MethodContext,
@@ -81,17 +71,20 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
       ): Promise<Response> {
         const { meta, methodName } = methodContext;
 
+        config.headers['User-Agent'] = 'Mozilla/5.0 BiliDroid/5.44.2';
+        config.headers.Referer = 'https://www.bilibili.com/';
+        if (config.method === 'POST') {
+          config.headers['content-type'] = 'application/x-www-form-urlencoded';
+        }
+
         // handling WebAuthorize
         if (meta[methodName]?.WebAuthorize) {
-          if (appStore.authCookie) {
+          if (appStore.csrf_token) {
             const { method } = config;
-            const csrf_token = appStore.authCookie.cookies.find(
-              (x) => x.name === 'bili_jct',
-            );
             if (method === 'GET') {
-              config.params.csrf_token = csrf_token;
+              config.params.csrf_token = appStore.csrf_token;
             } else {
-              config.data += '&csrf_token=' + csrf_token; // 和下面的情况一样 TODO
+              config.data.csrf_token = appStore.csrf_token;
             }
           }
         }
@@ -113,19 +106,11 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
           if (method === 'GET') {
             params = Object.assign(config.params, fixedParams);
           } else {
-            params = Object.assign({}, fixedParams, ...methodContext.args);
+            params = Object.assign(config.data, fixedParams);
           }
           params.sign = SignHelper.md5Sign(params, (signString) =>
             signString.concat(apiConfig.appSecret),
           );
-          // 还需要对ts-retrofit进行较大改造,
-          // config.data 要在所有filter 执行完成后再 构建 (需要一个 requestBuilder 类 在context中可以访问)
-          // todo contenttype dataresolver
-          if (method !== 'GET') {
-            config.data = Object.entries(params)
-              .map(([k, v]) => `${k}=${encodeURIComponent(v as any)}`)
-              .join('&');
-          }
         }
 
         return next();
