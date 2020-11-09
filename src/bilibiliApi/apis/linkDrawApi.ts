@@ -18,7 +18,7 @@ import { Enum_Biz } from '../contact';
 
 @ApiDescriptor('apivc')
 export class LinkDrawService extends BaseService {
-  @WebAuthorize()
+  @WebAuthorize
   @GET('link_draw/v2/doc/list')
   async getDocs(
     @QueryMapW()
@@ -32,7 +32,7 @@ export class LinkDrawService extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResultList>>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @GET('link_draw/v2/photo/list')
   async getPhotos(
     @QueryMapW()
@@ -46,7 +46,7 @@ export class LinkDrawService extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResultList>>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @GET('link_draw/v1/doc/detail')
   async getDocDetail(
     @QueryMapW()
@@ -57,7 +57,7 @@ export class LinkDrawService extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResult>>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @GET('link_draw/v1/doc/others')
   async getOthers(
     @QueryMapW()
@@ -70,7 +70,7 @@ export class LinkDrawService extends BaseService {
     return <Response<BiliBiliProtocol<LinkDrawResult>>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @POST('user_plus/v1/Fav/add')
   async favorite(
     @FieldMapW()
@@ -82,7 +82,7 @@ export class LinkDrawService extends BaseService {
     return <Response<void>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @POST('user_plus/v1/Fav/delete')
   async unfavorite(
     @FieldMapW()
@@ -94,7 +94,7 @@ export class LinkDrawService extends BaseService {
     return <Response<void>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @POST('link_draw/v2/Vote/operate')
   async vote(
     @FieldMapW()

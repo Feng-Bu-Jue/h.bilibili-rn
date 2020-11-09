@@ -1,4 +1,4 @@
-import { observable, action, computed, runInAction, toJS } from 'mobx';
+import { observable, action, computed, runInAction } from 'mobx';
 import AsyncStorage from '@react-native-community/async-storage';
 import { StorageKey } from '~/constants/key';
 import { AuthResult, AuthToken } from '~/bilibiliApi/typings';

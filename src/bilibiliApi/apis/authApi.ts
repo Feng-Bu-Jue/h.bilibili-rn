@@ -26,7 +26,7 @@ import { apiConfig } from '../contact';
 export class AuthService extends BaseService {
   @POST(`${ApiEndponits.passport}api/v3/oauth2/login`)
   @FormUrlEncoded
-  @AppAuthorize()
+  @AppAuthorize
   async login(
     @FieldMapW()
     query: any,

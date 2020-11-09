@@ -5,7 +5,7 @@ import { BiliBiliProtocol, UserSpaceDetail } from '../typings';
 
 @ApiDescriptor('app')
 export class UserService extends BaseService {
-  @AppAuthorize()
+  @AppAuthorize
   @GET('x/v2/space')
   async getUserDetail(
     @QueryMapW()

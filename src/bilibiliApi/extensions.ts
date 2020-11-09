@@ -28,21 +28,17 @@ export const ApiDescriptor = (descriptor: keyof typeof ApiEndponits) => {
     target.prototype.__meta__.ApiDescriptor = descriptor;
   };
 };
-export const WebAuthorize = () => {
-  return (target: any, methodName: string) => {
-    if (!target.__meta__[methodName]) {
-      target.__meta__[methodName] = {};
-    }
-    target.__meta__[methodName].WebAuthorize = true;
-  };
+export const WebAuthorize = (target: any, methodName: string) => {
+  if (!target.__meta__[methodName]) {
+    target.__meta__[methodName] = {};
+  }
+  target.__meta__[methodName].WebAuthorize = true;
 };
-export const AppAuthorize = () => {
-  return (target: any, methodName: string) => {
-    if (!target.__meta__[methodName]) {
-      target.__meta__[methodName] = {};
-    }
-    target.__meta__[methodName].AppAuthorize = true;
-  };
+export const AppAuthorize = (target: any, methodName: string) => {
+  if (!target.__meta__[methodName]) {
+    target.__meta__[methodName] = {};
+  }
+  target.__meta__[methodName].AppAuthorize = true;
 };
 //TODO 先wrap下 不清楚为啥不支持直接使用parameter decorator, 马萨卡 要去看babel的实现...
 export const QueryMapW = () => {
@@ -74,7 +70,7 @@ export const buildApi = <T>(service: new (builder: ServiceBuilder) => T) => {
         config.headers['User-Agent'] = 'Mozilla/5.0 BiliDroid/5.44.2';
         config.headers.Referer = 'https://www.bilibili.com/';
         if (config.method === 'POST') {
-          config.headers['content-type'] = 'application/x-www-form-urlencoded';
+          config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
         // handling WebAuthorize

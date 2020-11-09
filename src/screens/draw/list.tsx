@@ -4,6 +4,7 @@ import {
   LinkDrawResult,
   BiliBiliProtocol,
   LinkDrawResultList,
+  LinkDrawItem,
 } from '~/bilibiliApi/typings';
 import {
   BaseComponent,
@@ -143,10 +144,8 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
-  getVoteStatus(doc_id: number) {
-    return this.drawItems.some(
-      (x) => x.item.item.doc_id === doc_id && x.item.item.already_voted === 0,
-    );
+  isVoted(item: LinkDrawItem) {
+    return item.already_voted === 1;
   }
 
   async fetchDrawItems(columnWidth: number, reload: boolean = false) {
@@ -229,10 +228,8 @@ export default class DrawList extends BaseComponent<Props> {
     downloadFile(url);
   };
 
-  onItemActionPress = async (doc_id: number, voteStatus: boolean) => {
-    const item = this.drawItems.find((x) => x.item.item.doc_id === doc_id)!.item
-      .item;
-    if (voteStatus) {
+  onItemActionPress = async (doc_id: number, voted: boolean) => {
+    if (!voted) {
       await LinkDrawApi.favorite({ fav_id: doc_id, biz_type: 2 });
       await LinkDrawApi.vote({ doc_id, type: 1 });
     } else {
@@ -240,7 +237,21 @@ export default class DrawList extends BaseComponent<Props> {
       await LinkDrawApi.vote({ doc_id, type: 2 });
     }
     runInAction(() => {
-      item.already_voted = voteStatus ? 1 : 0;
+      this.drawItems = this.drawItems.map((_) => {
+        if (_.item.item.doc_id === doc_id) {
+          return {
+            ..._,
+            item: {
+              ..._.item,
+              item: {
+                ..._.item.item,
+                already_voted: voted ? 0 : 1,
+              },
+            },
+          };
+        }
+        return _;
+      });
     });
   };
 
@@ -261,7 +272,9 @@ export default class DrawList extends BaseComponent<Props> {
           <DropdownMenu.Box
             activeIndex={this.menuActiveIndex}
             onActiveIndexChange={(index) => {
-              this.menuActiveIndex = index;
+              runInAction(() => {
+                this.menuActiveIndex = index;
+              });
             }}>
             <DropdownMenu.Option
               value={this.categoryVlaue}
@@ -312,8 +325,7 @@ export default class DrawList extends BaseComponent<Props> {
             },
             columnWidth: number,
           ) => {
-            const voteStatus = this.getVoteStatus(item.item.doc_id);
-
+            const voted = this.isVoted(item.item);
             return (
               <View style={[styles.cardItem]}>
                 <TouchableNative
@@ -360,10 +372,10 @@ export default class DrawList extends BaseComponent<Props> {
                       <TouchableNative
                         style={styles.itemAction}
                         onPress={() =>
-                          this.onItemActionPress(item.item.doc_id, voteStatus)
+                          this.onItemActionPress(item.item.doc_id, voted)
                         }>
                         <Text style={{ color: colors.pink }}>
-                          {voteStatus ? 'Like' : 'Unlike'}
+                          {voted ? 'Unlike' : 'Like'}
                         </Text>
                       </TouchableNative>
                     </View>

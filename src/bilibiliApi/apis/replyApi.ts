@@ -10,7 +10,7 @@ import { BiliBiliProtocol, ReplyResult, AddReplyResult } from '../typings';
 
 @ApiDescriptor('api')
 export class ReplyService extends BaseService {
-  @WebAuthorize()
+  @WebAuthorize
   @GET('x/v2/reply')
   async getReplies(
     @QueryMapW()
@@ -24,7 +24,7 @@ export class ReplyService extends BaseService {
     return <Response<BiliBiliProtocol<ReplyResult>>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @POST('x/v2/reply/add')
   async addReply(
     @FieldMapW()
@@ -38,7 +38,7 @@ export class ReplyService extends BaseService {
     return <Response<BiliBiliProtocol<AddReplyResult>>>{};
   }
 
-  @WebAuthorize()
+  @WebAuthorize
   @POST('x/v2/reply/action')
   async action(
     @FieldMapW()

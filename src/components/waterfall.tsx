@@ -344,6 +344,7 @@ export default class Waterfall<TItem = any> extends React.Component<
 
       for (let i = start; i <= end; i++) {
         const position = this.getPositionForIndex(i);
+        const itemInfo = itemInfoData[i];
         items.push(
           <View
             key={i}
@@ -353,9 +354,9 @@ export default class Waterfall<TItem = any> extends React.Component<
               top: position.offsetTop,
               left: position.offsetLeft,
               width: columnWidth,
-              height: itemInfoData[i].size,
+              height: itemInfo.size,
             }}>
-            {renderItem(itemInfoData[i], columnWidth, i)}
+            {renderItem(itemInfo, columnWidth, i)}
           </View>,
         );
       }
