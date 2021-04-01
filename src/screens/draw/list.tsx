@@ -12,7 +12,7 @@ import {
   DropdownMenu,
   Portal,
 } from '~/components';
-import Waterfall, { ItemInfo } from '~/components/waterfall';
+import Waterfall from '~/components/waterfall';
 import { observable, runInAction, computed, reaction } from 'mobx';
 import {
   View,
@@ -87,7 +87,7 @@ export default class DrawList extends BaseComponent<Props> {
   stickyHeaderIndices = [0];
 
   @observable
-  drawItems: ItemInfo<LinkDrawResult>[] = [];
+  drawItems: LinkDrawResult[] = [];
   @observable
   menuActiveIndex = -1;
   @observable
@@ -148,7 +148,7 @@ export default class DrawList extends BaseComponent<Props> {
     return item.already_voted === 1;
   }
 
-  async fetchDrawItems(columnWidth: number, reload: boolean = false) {
+  async fetchDrawItems(reload: boolean = false) {
     if (reload) {
       runInAction(() => {
         this.pageNum = 0;
@@ -181,19 +181,10 @@ export default class DrawList extends BaseComponent<Props> {
       this.pageNum++;
       if (this.pageSize * this.pageNum < response?.data?.data.total_count) {
         runInAction(() => {
-          const mappingResult = response.data.data.items
+          const filteredResult = response.data.data.items
             // b站api 是放弃画册了吗 有的item height都不返回(阿B api bug不修复一直可以的)
-            .filter((item) => !!item.item?.pictures[0]?.img_height)
-            .map((item) => {
-              const ratio =
-                item.item.pictures[0].img_height /
-                item.item.pictures[0].img_width;
-              return {
-                size: ratio * columnWidth + this.cardContentHeight,
-                item: item,
-              };
-            });
-          this.drawItems = this.drawItems.concat(mappingResult);
+            .filter((item) => !!item.item?.pictures[0]?.img_height);
+          this.drawItems = this.drawItems.concat(filteredResult);
         });
       }
     } catch (e) {
@@ -203,9 +194,16 @@ export default class DrawList extends BaseComponent<Props> {
 
   reloadDrawItems() {
     if (this.waterfallRef) {
-      this.fetchDrawItems(this.waterfallRef.getColumnWidth(), true);
+      this.fetchDrawItems(true);
     }
   }
+
+  sizeGetter = (width: number, index: number) => {
+    const item = this.drawItems[index];
+    const ratio =
+      item.item.pictures[0].img_height / item.item.pictures[0].img_width;
+    return ratio * width + this.cardContentHeight;
+  };
 
   /*-------------------------EventHandler------------------------- */
 
@@ -238,15 +236,12 @@ export default class DrawList extends BaseComponent<Props> {
     }
     runInAction(() => {
       this.drawItems = this.drawItems.map((_) => {
-        if (_.item.item.doc_id === doc_id) {
+        if (_.item.doc_id === doc_id) {
           return {
             ..._,
             item: {
               ..._.item,
-              item: {
-                ..._.item.item,
-                already_voted: voted ? 0 : 1,
-              },
+              already_voted: voted ? 0 : 1,
             },
           };
         }
@@ -305,26 +300,18 @@ export default class DrawList extends BaseComponent<Props> {
       <Portal.Host>
         <Waterfall
           ref={(r) => (this.waterfallRef = r)}
-          onInitData={(columnWidth) => this.fetchDrawItems(columnWidth)}
+          onInitData={() => this.fetchDrawItems()}
           columnNum={2}
           columnGap={this.columnGap}
-          itemInfoData={this.drawItems}
+          itemInfos={this.drawItems}
+          heightGetter={this.sizeGetter}
           bufferAmount={10}
           infiniteThreshold={800}
           containerStyle={layout.padding(0, 10)}
           bounces={true}
           stickyHeaderIndices={this.stickyHeaderIndices.slice()}
           HeaderComponent={headerComponent}
-          renderItem={(
-            {
-              item,
-              size,
-            }: {
-              item: LinkDrawResult;
-              size: number;
-            },
-            columnWidth: number,
-          ) => {
+          renderItem={(item, columnWidth, size) => {
             const voted = this.isVoted(item.item);
             return (
               <View style={[styles.cardItem]}>
@@ -384,16 +371,16 @@ export default class DrawList extends BaseComponent<Props> {
               </View>
             );
           }}
-          onRefresh={(columnWidth) => {
+          onInfinite={() => this.fetchDrawItems()}
+          onRefresh={() => {
             this.pageNum = 1;
-            return this.fetchDrawItems(columnWidth, true);
+            return this.fetchDrawItems(true);
           }}
           onScroll={this.onScroll}
           onScrollEndDrag={(e) => {
             this.lastRecordedOffetY = e.nativeEvent.contentOffset.y;
           }}
           refreshControlProps={{ colors: [colors.pink] }}
-          onInfinite={(columnWidth) => this.fetchDrawItems(columnWidth)}
         />
         <Portal>
           <View style={styles.arrowUpWrapBox}>

@@ -1,4 +1,3 @@
-import { observer } from 'mobx-react';
 import React from 'react';
 import {
   EmitterSubscription,
@@ -11,7 +10,6 @@ import { colors } from '~/constants';
 import { HeaderBackground, StackNavigationProp } from '@react-navigation/stack';
 import { RootParamList } from '~/typings/navigation';
 
-@observer
 export default class BaseComponent<
   P = {},
   S = {},
@@ -34,7 +32,6 @@ enum HeaderStatus {
   nonTransparent,
 }
 
-@observer
 export class BaseComponentWithAnimatedHeader<
   P extends {
     navigation: StackNavigationProp<RootParamList, any>;

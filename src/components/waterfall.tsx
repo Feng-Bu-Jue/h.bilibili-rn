@@ -17,28 +17,30 @@ import {
   ScrollView,
 } from 'react-native';
 
-export type WaterfallProps<TItem> = {
+export interface WaterfallProps<TItem> extends ScrollViewProps {
   columnNum: number;
   columnGap?: number;
-  itemInfoData: ItemInfo<TItem>[];
+  itemInfos: TItem[];
   bufferAmount?: number;
   infiniteThreshold?: number;
+  heightGetter: (width: number, index: number) => number;
   renderItem: (
-    itemInfo: ItemInfo<TItem>,
-    columnWidth: number,
+    itemInfo: TItem,
+    width: number,
+    height: number,
     index: number,
   ) => React.ReactNode;
   renderLoadMore?: (isLoading: boolean) => React.ReactNode;
   HeaderComponent?: React.ComponentType<any> | React.ReactElement;
   FooterComponent?: React.ComponentType<any> | React.ReactElement;
-  onInitData: (columnWidth: number) => Promise<void>;
-  onInfinite?: (columnWidth: number) => Promise<void>;
-  onRefresh?: (columnWidth: number) => Promise<void>;
+  onInitData: () => Promise<void>;
+  onInfinite?: () => Promise<void>;
+  onRefresh?: () => Promise<void>;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   refreshControlProps?: RefreshControlPropsIOS & RefreshControlPropsAndroid;
   style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
-} & Partial<ScrollViewProps>;
+}
 
 type State = {
   columnWidth: number;
@@ -47,20 +49,15 @@ type State = {
   loading: boolean;
 };
 
-export type ItemInfo<TItem> = {
-  size: number;
-  item: TItem;
-};
-
 export default class Waterfall<TItem = any> extends React.Component<
   WaterfallProps<TItem>,
   State
 > {
-  static defaultProps: Partial<WaterfallProps<any>> = {
+  static defaultProps = {
     columnGap: 0,
     bufferAmount: 10,
     infiniteThreshold: 50,
-    renderLoadMore: (loading) => (
+    renderLoadMore: (loading: boolean) => (
       <View
         style={[
           styles.loadingMoreBox,
@@ -77,7 +74,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     ),
   };
 
-  scrollViewRef: ScrollView | null = null;
+  scrollViewRef = React.createRef<ScrollView>();
   scrollOffset = new Animated.Value(0);
   itemsRunwayOffset = new Animated.Value(0);
 
@@ -115,7 +112,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     x?: number,
     animated?: boolean,
   ): void => {
-    this.scrollViewRef?.scrollTo(y, x, animated);
+    this.scrollViewRef.current?.scrollTo(y, x, animated);
   };
 
   private onScroll = ({
@@ -128,9 +125,10 @@ export default class Waterfall<TItem = any> extends React.Component<
     this.setState({ offset: y });
     if (
       y + height >= contentHeight - this.props.infiniteThreshold! &&
-      this.lastMeasuredIndex === this.props.itemInfoData.length - 1 &&
+      this.lastMeasuredIndex === this.props.itemInfos.length - 1 &&
       !this.state.refreshing &&
-      !this.state.loading
+      !this.state.loading &&
+      this.props.onInfinite
     ) {
       this.onInfinite();
     }
@@ -138,7 +136,7 @@ export default class Waterfall<TItem = any> extends React.Component<
 
   private onRefresh = () => {
     this.setState({ refreshing: true });
-    return this.props.onRefresh!(this.state.columnWidth).finally(() => {
+    return this.props.onRefresh!().finally(() => {
       this.reset();
       this.setState({ refreshing: false });
     });
@@ -146,7 +144,7 @@ export default class Waterfall<TItem = any> extends React.Component<
 
   private onInfinite = () => {
     this.setState({ loading: true });
-    return this.props.onInfinite!(this.state.columnWidth).finally(() => {
+    return this.props.onInfinite!().finally(() => {
       this.setState({ loading: false });
     });
   };
@@ -167,12 +165,12 @@ export default class Waterfall<TItem = any> extends React.Component<
     },
   }: LayoutChangeEvent) => {
     if (this.itemsRunwayWidth !== width) {
-      const { columnNum, columnGap, itemInfoData } = this.props;
+      const { columnNum, columnGap, itemInfos } = this.props;
 
       this.itemsRunwayWidth = width;
       const newColumnWidth = (width - (columnNum - 1) * columnGap!) / columnNum;
-      if (!itemInfoData?.length) {
-        this.onInitData(newColumnWidth);
+      if (!itemInfos?.length) {
+        this.onInitData();
       }
       this.reset();
       this.setState({
@@ -181,9 +179,9 @@ export default class Waterfall<TItem = any> extends React.Component<
     }
   };
 
-  private onInitData = (columnWidth: number) => {
+  private onInitData = () => {
     this.setState({ refreshing: true });
-    return this.props.onInitData(columnWidth).finally(() => {
+    return this.props.onInitData().finally(() => {
       this.setState({ refreshing: false });
     });
   };
@@ -214,10 +212,10 @@ export default class Waterfall<TItem = any> extends React.Component<
   }
 
   evaluateVisibleRange() {
-    let { offset } = this.state;
-    const { itemInfoData, bufferAmount } = this.props;
+    let { offset, columnWidth } = this.state;
+    const { itemInfos, bufferAmount, heightGetter } = this.props;
     const maxOffset = offset + this.scrollHeight * 1.5;
-    const itemCount = itemInfoData.length;
+    const itemCount = itemInfos.length;
     let start = 0;
 
     const lastMeasuredOffset =
@@ -243,7 +241,8 @@ export default class Waterfall<TItem = any> extends React.Component<
       });
     }
     offset =
-      this.getPositionForIndex(start).offsetTop + itemInfoData[start].size;
+      this.getPositionForIndex(start).offsetTop +
+      heightGetter(columnWidth, start);
 
     let end = start;
     while (offset < maxOffset && end < itemCount - 1) {
@@ -304,7 +303,7 @@ export default class Waterfall<TItem = any> extends React.Component<
   }
 
   getPositionForIndex(index: number) {
-    const { columnGap, itemInfoData } = this.props;
+    const { columnGap, heightGetter } = this.props;
     const { columnWidth } = this.state;
     if (index > this.lastMeasuredIndex) {
       for (let i = this.lastMeasuredIndex + 1; i <= index; i++) {
@@ -313,7 +312,8 @@ export default class Waterfall<TItem = any> extends React.Component<
           offsetLeft: (columnWidth + columnGap!) * columnIndex,
           offsetTop: columnOffset,
         };
-        this.itemOffsetTops[columnIndex] = columnOffset + itemInfoData[i].size;
+        this.itemOffsetTops[columnIndex] =
+          columnOffset + heightGetter(columnWidth, i);
         this.lastMeasuredIndex = i;
       }
     }
@@ -326,7 +326,8 @@ export default class Waterfall<TItem = any> extends React.Component<
       renderLoadMore,
       HeaderComponent,
       FooterComponent,
-      itemInfoData,
+      itemInfos,
+      heightGetter,
       onScroll,
       onRefresh,
       onInfinite,
@@ -339,12 +340,11 @@ export default class Waterfall<TItem = any> extends React.Component<
     } = this.props;
     const { columnWidth, loading, refreshing } = this.state;
     const items: React.ReactNodeArray = [];
-    if (columnWidth && itemInfoData.length) {
+    if (columnWidth && itemInfos.length) {
       const [start, end] = this.evaluateVisibleRange();
 
       for (let i = start; i <= end; i++) {
         const position = this.getPositionForIndex(i);
-        const itemInfo = itemInfoData[i];
         items.push(
           <View
             key={i}
@@ -354,9 +354,14 @@ export default class Waterfall<TItem = any> extends React.Component<
               top: position.offsetTop,
               left: position.offsetLeft,
               width: columnWidth,
-              height: itemInfo.size,
+              height: heightGetter(columnWidth, i),
             }}>
-            {renderItem(itemInfo, columnWidth, i)}
+            {renderItem(
+              itemInfos[i],
+              columnWidth,
+              heightGetter(columnWidth, i),
+              i,
+            )}
           </View>,
         );
       }
@@ -367,7 +372,7 @@ export default class Waterfall<TItem = any> extends React.Component<
     return (
       <View style={[styles.container]}>
         <ScrollView
-          ref={(r) => (this.scrollViewRef = r)}
+          ref={this.scrollViewRef}
           style={style}
           bounces={false}
           onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
