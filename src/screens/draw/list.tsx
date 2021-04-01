@@ -144,6 +144,10 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
+  componentDidMount() {
+    this.fetchDrawItems();
+  }
+
   isVoted(item: LinkDrawItem) {
     return item.already_voted === 1;
   }
@@ -198,12 +202,12 @@ export default class DrawList extends BaseComponent<Props> {
     }
   }
 
-  sizeGetter = (width: number, index: number) => {
+  heightGetter(width: number, index: number) {
     const item = this.drawItems[index];
     const ratio =
       item.item.pictures[0].img_height / item.item.pictures[0].img_width;
     return ratio * width + this.cardContentHeight;
-  };
+  }
 
   /*-------------------------EventHandler------------------------- */
 
@@ -300,11 +304,10 @@ export default class DrawList extends BaseComponent<Props> {
       <Portal.Host>
         <Waterfall
           ref={(r) => (this.waterfallRef = r)}
-          onInitData={() => this.fetchDrawItems()}
           columnNum={2}
           columnGap={this.columnGap}
           itemInfos={this.drawItems}
-          heightGetter={this.sizeGetter}
+          heightGetter={this.heightGetter.bind(this)}
           bufferAmount={10}
           infiniteThreshold={800}
           containerStyle={layout.padding(0, 10)}
